@@ -14,5 +14,12 @@ publish = false
 [package.metadata.rechenblatt]
 side = "pure"
 
+# The one component that turns a document into the model. Everything else in the
+# workspace reads the model rather than the file, and
+# crates/cli/tests/model_ownership.rs refuses a second component declaring this
+# and a part of a document named anywhere else.
+# docs/decisions/0003-workbook-model.md argues why.
+reads-documents = true
+
 [lints]
 workspace = true
