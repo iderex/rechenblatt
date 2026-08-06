@@ -42,6 +42,7 @@ red while that happens, which is the whole problem with it.
 | `Lint` | `cargo clippy --locked --workspace --all-targets` |
 | `Prove the format and lint gates bite` | `bash .github/scripts/prove-format-and-lint.sh` |
 | `Build and suite` | `cargo build --locked --workspace --all-targets`, then `cargo test --locked --workspace`, then the coverage floor |
+| `Headless and unelevated` | `bash .github/scripts/run-sealed.sh suite`, then `bash .github/scripts/run-sealed.sh probes`; both need docker, and the first fetch of the pinned image needs the network |
 | `Names match the document` | `bash .github/scripts/prove-check-names.sh`, then `bash .github/scripts/check-check-names.sh .` |
 | `Refuse ambiguous tracked bytes` | `bash .github/scripts/prove-tracked-bytes.sh`, then `bash .github/scripts/check-tracked-bytes.sh .` |
 | `Reject Trojan Source Unicode` | the `git grep` expression in `CONTRIBUTING.md` |
@@ -51,7 +52,7 @@ red while that happens, which is the whole problem with it.
 | `Scorecard analysis` | no local form; it does not run on a pull request at all |
 
 `docs/format-and-lint.md`, `docs/test-harness.md` and `docs/tracked-bytes.md` are
-where the first four are argued. The two with no local form are disclosed in
+where the first five are argued. The two with no local form are disclosed in
 `CONTRIBUTING.md` as well, so a contributor meets that fact before a red check
 tells them.
 
