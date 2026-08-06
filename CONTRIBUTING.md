@@ -1,0 +1,160 @@
+# Contributing
+
+## Every change starts as an issue
+
+Planning happens on the tracker before the code that depends on it exists. Open an
+issue, get the shape of the change agreed there, then send a pull request that
+closes it. A pull request that arrives without an issue behind it is a change
+whose reasoning is only in the diff, and the diff is the worst place to keep it.
+
+## From a clone to a green run
+
+```
+git clone https://github.com/iderex/rechenblatt.git
+cd rechenblatt
+```
+
+The tree holds documents and workflow guards and no code yet, so the run below is
+short. There is no build command and no test command in this repository today.
+Issue #3 adds the workspace and the build, issue #5 adds the test harness, and
+this guide gains those commands when they land. Until then, a green run means the
+two guards that read the tracked tree, and neither of them needs anything
+installed beyond git.
+
+Reject bidirectional and invisible Unicode, the same expression the
+`unicode-guard` workflow runs:
+
+```
+git grep -nIP '(*UTF)[\x{202A}-\x{202E}\x{2066}-\x{2069}\x{200E}\x{200F}\x{061C}\x{200B}-\x{200D}\x{2060}]' -- .
+```
+
+Any line printed is a failure and names the file and position. No output is the
+pass. Note that `git grep` exits 1 when it finds nothing, which is the good case
+here, so do not wire this into a script that treats a non-zero status as an error
+without inverting it first.
+
+Check the sign-off on every commit you are about to push, the same rule the `DCO`
+workflow applies:
+
+```
+for sha in $(git rev-list --no-merges origin/main..HEAD); do
+  expected="Signed-off-by: $(git show -s --format='%an <%ae>' "$sha")"
+  if git show -s --format='%B' "$sha" | grep -qxF "$expected"; then
+    echo "ok    $sha"
+  else
+    echo "FAIL  $sha is missing: $expected"
+  fi
+done
+```
+
+Two of the gates have no local form here, and that is stated rather than left to
+be discovered on a red pull request. The workflow audit runs
+`uvx --no-build zizmor@<version> --strict-collection --min-severity=low --format=plain .`,
+which needs a Python package runner and network access to fetch the tool; the
+version it pins is in `.github/workflows/zizmor.yml`. If you have neither, that
+gate runs on the pull request and not on your machine. The dependency review
+compares the pull request diff against an advisory database on the server and has
+no local equivalent at all.
+
+## The gates a pull request is judged by
+
+Do not read a list of them here, because a list drifts against the workflows.
+
+The set that exists in the tree:
+
+```
+git ls-files .github/workflows
+```
+
+The set that actually ran on a pull request, with each result:
+
+```
+gh pr checks <number>
+```
+
+Every gate is fail-closed. A scanner that cannot run reds the check rather than
+passing it, so a red result never means the gate was skipped.
+
+## Sign your work
+
+Every commit carries a `Signed-off-by` trailer whose name and address match the
+commit author, and the trailer is your assertion of [DCO.md](DCO.md). The workflow
+refuses a pull request containing a commit without one.
+
+```
+git commit -s -m "..."
+```
+
+To add the trailer to commits you already made on a branch:
+
+```
+git rebase --signoff origin/main
+```
+
+That rewrites the commits on your branch, so do it before anyone else builds on
+them.
+
+## What a good issue contains
+
+What is wrong, what the evidence is, and what done means. All three, because an
+issue missing the third is one nobody can close and an issue missing the second is
+an opinion.
+
+Where the evidence is a number, the issue carries the command that produced it, so
+a reader can run it again and get the same number or find out that it moved.
+
+A line reading `Scope:` at column zero, naming the paths the change is expected to
+touch. It is how a reviewer sees at a glance that a change reached somewhere its
+issue never mentioned.
+
+Anything exploitable does not go on the public tracker. This repository has no
+published private reporting route yet; issue #11 delivers one. Until it lands, do
+not open a public issue describing a way to make this software do something it
+should not.
+
+## What a good pull request body contains
+
+What changed and what failure it prevents. Not a restatement of the diff, which
+the reader already has.
+
+Which issue it closes, with the closing keyword, so the tracker does not need a
+second pass.
+
+The commands whose output backs any number in the body, run at the commit being
+pushed rather than in a working tree that has moved on since. A number without its
+command is a claim, and it is fine to write a claim as long as it says it is one.
+
+Whether anybody other than the author has read it, stated plainly either way. A
+body saying nobody else has read this is worth more than one that is silent about
+it.
+
+## Rules this repository holds that you cannot guess
+
+The default test suite runs headless and unelevated. No display server, no
+elevated rights, no host font directory, no network. A test that needs a real
+environment goes to a separate harness named for what it needs and is not part of
+the default run. This is a condition the first test meets rather than something
+the suite is audited for later, and issue #7 is where it becomes a check.
+
+Code that reads bytes this project did not create stays behind a boundary. A
+parser takes bytes and returns a value or a typed error: it opens no path it was
+not handed, makes no network call, reads no clock, and never aborts the process on
+malformed input. That is a contract rather than a style preference, because it is
+what makes a fuzz target a wrapper instead of a rewrite. Issue #8 is where the
+build refuses a dependency edge that crosses the boundary.
+
+A decision that shapes the architecture goes in `docs/decisions/`, one file per
+decision, numbered, stating the decision in a sentence at the top, then the
+reasoning, the cost, the rejected alternatives and the condition that would
+reverse it. `docs/decisions/0002-track-order.md` is the shape to copy. A decision
+argued only in a pull request thread is one the next person has to reconstruct
+from memory.
+
+## Style
+
+English in tracked text. No tool names, generated-by markers or attribution
+banners in anything tracked.
+
+A commit message states what changed and what failure it prevents. Where it
+corrects something, it says what was wrong and how that was found. One topic per
+commit and one topic per pull request.
