@@ -21,7 +21,7 @@
 # `[package.metadata.rechenblatt]` table in its own manifest. A component on the
 # parsing side may not depend on one that can reach a capability, and
 # crates/cli/tests/boundary.rs refuses the edge by name.
-# docs/decisions/0003-input-boundary.md is where that is argued.
+# docs/decisions/0014-input-boundary.md is where that is argued.
 
 [workspace]
 resolver = "3"

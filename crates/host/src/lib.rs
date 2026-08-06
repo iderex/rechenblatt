@@ -11,7 +11,7 @@
 //! collected on.
 //!
 //! It is empty. Milestone 9 fills it, starting at issue #77, and the components
-//! that will hand it work are named in `docs/decisions/0003-input-boundary.md`.
+//! that will hand it work are named in `docs/decisions/0014-input-boundary.md`.
 
 /// What this component is called where a diagnostic has to name one.
 pub const COMPONENT: &str = "host";
