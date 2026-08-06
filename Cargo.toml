@@ -50,3 +50,20 @@ rechenblatt-macro = { path = "crates/macro", version = "0.0.0" }
 # exception is a narrower allow with its reason beside it in the source, which is
 # visible in a diff; this denial is what makes that visible.
 unsafe_code = "deny"
+# A warning fails the build, and this one line is what does it for the compiler
+# and for the linter both. `warnings` is every lint currently at warn level, and
+# when cargo hands it to clippy that includes clippy's own, so a lint in
+# `clippy::all` errors here without `clippy` being named. A second declaration
+# saying `clippy::all = "deny"` beside this would change nothing a run can see,
+# and .github/scripts/prove-format-and-lint.sh is where that was measured rather
+# than assumed.
+#
+# It is declared here rather than passed as `-D warnings` on a command line, so a
+# local run and a workflow run cannot disagree about it: whoever runs cargo gets
+# this, whatever they typed.
+#
+# The priority leaves room for a narrower allow beside the code that needs it,
+# which is the exception a reviewer can see in a diff. The compiler is pinned in
+# rust-toolchain.toml, so a lint that is new rather than newly broken arrives in
+# the commit that moves the pin and not on a morning nobody changed anything.
+warnings = { level = "deny", priority = -1 }
