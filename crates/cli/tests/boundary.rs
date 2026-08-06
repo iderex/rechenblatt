@@ -16,7 +16,7 @@
 //! side = "pure"   # or "host"
 //! ```
 //!
-//! `docs/decisions/0003-input-boundary.md` is where the split is argued and
+//! `docs/decisions/0014-input-boundary.md` is where the split is argued and
 //! where what each side may do is written out.
 //!
 //! What this reads and what it therefore cannot see. It reads the declared

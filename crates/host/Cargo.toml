@@ -10,7 +10,7 @@ publish = false
 # The host side of the input boundary. This is the component allowed to open a
 # path, make a network call or read a clock, and it is the only one. Nothing that
 # reads bytes a stranger wrote may depend on it, which
-# crates/cli/tests/boundary.rs refuses and docs/decisions/0003-input-boundary.md
+# crates/cli/tests/boundary.rs refuses and docs/decisions/0014-input-boundary.md
 # argues.
 [package.metadata.rechenblatt]
 side = "host"

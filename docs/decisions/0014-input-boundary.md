@@ -1,4 +1,4 @@
-# 0003 The input boundary
+# 0014 The input boundary
 
 The components that read bytes this project did not create may not depend on the
 component that can open a path, make a network call or read a clock, and the
@@ -7,6 +7,10 @@ suite refuses the dependency by name.
 Status: accepted
 Date: 2026-08-06
 Issue: #8
+
+The number is 0014 rather than the next one after 0002. Every number from 0001 to
+0013 is named by an issue that has not delivered its record yet, so taking a free
+gap would have taken one of those. Issue #124 is where this was found and moved.
 
 ## Context
 

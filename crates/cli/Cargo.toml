@@ -10,7 +10,7 @@ publish = false
 # The host side of the input boundary. This component may reach a capability,
 # which is why nothing on the parsing side may depend on it.
 # crates/cli/tests/boundary.rs refuses such a dependency and
-# docs/decisions/0003-input-boundary.md argues why.
+# docs/decisions/0014-input-boundary.md argues why.
 [package.metadata.rechenblatt]
 side = "host"
 
