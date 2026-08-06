@@ -1,0 +1,114 @@
+# The checks
+
+What runs when a change is proposed, what each one is called, and what
+reproduces it here.
+
+## What exists, printed rather than written down
+
+The workflows in the tree:
+
+```
+git ls-files .github/workflows
+```
+
+What actually ran on a pull request, with each result:
+
+```
+gh pr checks <number>
+```
+
+Every check name a job in this tree can produce, which is the same extraction the
+checker below makes:
+
+```
+awk '/^jobs:/{j=1;next} j&&/^[^ #]/{j=0} j&&/^    name:/{sub(/^    name: /,"");print}' .github/workflows/*.yml
+```
+
+Those three answer three different questions and none of them is the same
+question. The first is what the tree carries, the second is what a given pull
+request got, and the third is the set of names a rule could be written against.
+
+## The names, and what reproduces each one
+
+A name in this table is a contract, not a label. A rule that requires a check
+matches it by its literal name, and a job with no `name:` produces a check named
+after its job id instead, so adding, removing or retyping one of those lines
+renames the check and detaches any rule that required the old name. Nothing goes
+red while that happens, which is the whole problem with it.
+
+| Check | What reproduces it here |
+| --- | --- |
+| `Formatting` | `cargo fmt --all -- --check` |
+| `Lint` | `cargo clippy --locked --workspace --all-targets` |
+| `Prove the format and lint gates bite` | `bash .github/scripts/prove-format-and-lint.sh` |
+| `Build and suite` | `cargo build --locked --workspace --all-targets`, then `cargo test --locked --workspace`, then the coverage floor |
+| `Names match the document` | `bash .github/scripts/prove-check-names.sh`, then `bash .github/scripts/check-check-names.sh .` |
+| `Refuse ambiguous tracked bytes` | `bash .github/scripts/prove-tracked-bytes.sh`, then `bash .github/scripts/check-tracked-bytes.sh .` |
+| `Reject Trojan Source Unicode` | the `git grep` expression in `CONTRIBUTING.md` |
+| `DCO sign-off` | the sign-off loop in `CONTRIBUTING.md` |
+| `Audit workflows (zizmor)` | no local form without a Python package runner and network access |
+| `Dependency review` | no local form; it compares the diff against an advisory database on the server |
+| `Scorecard analysis` | no local form; it does not run on a pull request at all |
+
+`docs/format-and-lint.md`, `docs/test-harness.md` and `docs/tracked-bytes.md` are
+where the first four are argued. The two with no local form are disclosed in
+`CONTRIBUTING.md` as well, so a contributor meets that fact before a red check
+tells them.
+
+## Why a table here is not the drift it looks like
+
+A list in a document drifts against the thing it describes, and the usual repair
+is to delete the list and name the command that prints it. Both commands are
+above. The table stays because a name alone is useless: the reader wants the
+command that reproduces the check, and no command in the world prints that.
+
+What makes it safe is that a checker refuses the drift:
+
+```
+bash .github/scripts/check-check-names.sh .
+```
+
+It reads every job out of `.github/workflows/` and every backticked name out of
+the first column above, and refuses three things: a job with no explicit `name:`,
+a job whose name has no row here, and a row here that no job produces. So a
+workflow edit that renames a check fails until this table is edited with it, and
+a row that describes a gate nobody runs fails too.
+
+Where it stops. It compares names, so a row whose command is wrong passes; that
+is what a review is for. It reads jobs, so a check run created by something other
+than a job in this tree - code scanning uploads one under the tool's own name -
+is neither required nor refused here. And it says nothing about which names a
+rule on the default branch requires, because that is a repository setting and not
+a fact of the tree. Today that answer is none:
+
+```
+gh api repos/iderex/rechenblatt/rulesets/20487256 \
+  --jq '[.rules[] | select(.type == "required_status_checks")] | length'
+0
+```
+
+Which of these names should stand in front of the default branch is issue #93.
+Until it is answered, these gates are run and read rather than required, and this
+table is the list that issue will choose from.
+
+## The shape every workflow here holds
+
+- Every action is pinned to a commit hash with its version in a comment beside
+  it. Nothing printed by the following is the pass:
+
+      grep -rn 'uses:' .github/workflows/ | grep -v '@[0-9a-f]\{40\} #'
+
+- Every checkout runs with `persist-credentials: false`, so no step leaves the
+  token in `.git/config` for a later step to find.
+- Permissions are declared read-only at the workflow level and widened only on
+  the job that needs more. Two jobs need `security-events: write` to upload
+  findings, and they declare it themselves.
+- No path filter skips a job. A skipped job reports nothing rather than
+  reporting success, and a rule requiring that check reads nothing as never
+  satisfied, so the change waits on a gate that decided it had nothing to do.
+  There is no path filter in the tree:
+
+      grep -rn 'paths:\|paths-ignore:' .github/workflows/
+
+- Every gate is fail-closed. A scanner that cannot run reds its check rather
+  than passing it, so a red result never means the gate was skipped.
