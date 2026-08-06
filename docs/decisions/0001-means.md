@@ -207,10 +207,21 @@ that a third is not justified by pointing at them.
 
 ## How these records are named
 
-`docs/decisions/NNNN-slug.md`. Four digits, a hyphen, a lowercase hyphenated slug,
-`.md`. The number is assigned once and never reused, and it is not the issue
-number: the issue is named in the header instead, so a record and the discussion
-that produced it stay linked without the file name having to carry it.
+`docs/decisions/<number>-<slug>.md`. Four digits, a hyphen, a lowercase
+hyphenated slug, `.md`. The angle brackets are what makes this a shape rather
+than a file name: `crates/cli/tests/documentation.rs` resolves every path these
+documents name, and a placeholder written to look like one would be a claim that
+a record called that is there.
+
+The number is assigned once and never reused, and it is not the issue number: the
+issue is named in the header instead, so a record and the discussion that
+produced it stay linked without the file name having to carry it. Take the first
+number no issue has already named, which is read out of the tracker rather than
+guessed at:
+
+    gh issue list --repo iderex/rechenblatt --state all --limit 200 \
+      --json number,body \
+      --jq '.[] | select(.body | test("docs/decisions/[0-9]")) | .number'
 
 The header is the title line, then the decision in a sentence or two, then
 `Status`, `Date` and `Issue`. `docs/decisions/0002-track-order.md` is the shape to
