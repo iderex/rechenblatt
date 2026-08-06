@@ -1,0 +1,94 @@
+# Formatting and lint.
+#
+# Both gates run the command a contributor runs, and neither one passes a rule on
+# the command line. The formatter reads rustfmt.toml and the linter reads the
+# lints table in Cargo.toml, so a run here and a run on a laptop are given the
+# same rules by the same files, and a change to the rules is a change to the tree
+# rather than to a workflow.
+#
+# The job names are the contract. A branch protection rule matches a check by its
+# literal name, so renaming a job here removes that rule's gate without failing
+# anything. docs/format-and-lint.md carries the names beside the local commands.
+#
+# The proof runs as its own job for the same reason the tracked-bytes proof runs
+# before its scan: a gate that has stopped biting otherwise reports a clean tree,
+# and a clean report from a dead check is worse than a red one.
+name: format-and-lint
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+# Read-only: these gates read the tree and write nothing back.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  format:
+    name: Formatting
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # No step pushes, so do not persist the GITHUB_TOKEN in .git/config.
+          persist-credentials: false
+
+      - name: Show the formatter this commit pins
+        # rustup reads rust-toolchain.toml, which names rustfmt as a component, so
+        # this step installs it and puts its version in the log where a reader of a
+        # failed run can see which formatter produced the failure.
+        run: |
+          set -euo pipefail
+          cat rust-toolchain.toml
+          cargo fmt --version
+
+      - name: Check the formatting without writing
+        run: cargo fmt --all -- --check
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Show the linter this commit pins
+        run: |
+          set -euo pipefail
+          cat rust-toolchain.toml
+          cargo clippy --version
+
+      - name: Lint every target
+        # No -D on this line. The denial is in Cargo.toml, so this command means
+        # the same thing here and on a contributor's machine. --all-targets
+        # reaches the tests as well as the libraries, and --locked fails a run
+        # that would rewrite Cargo.lock instead of rewriting it.
+        run: cargo clippy --locked --workspace --all-targets
+
+  proof:
+    name: Prove the format and lint gates bite
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Plant each mistake and require the gate to refuse it
+        # Nine legs. Every refusal against a tree holding exactly the mistake it
+        # is about, the same tree with that one thing changed back, and - for the
+        # lint gate - the mistake again with the denial taken out of Cargo.toml,
+        # which is what says the tracked line is doing the refusing.
+        run: bash .github/scripts/prove-format-and-lint.sh

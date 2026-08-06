@@ -1,0 +1,18 @@
+# How this tree is formatted.
+#
+# The file exists so that the machine that checks the formatting and the machine
+# that produced it agree. rustfmt's defaults are what this project wants
+# otherwise, so only the setting that would differ between two machines is
+# written here. A long list of preferences would be an argument about taste; this
+# is not that.
+#
+# The commands are in docs/format-and-lint.md, next to the check name they appear
+# under on a pull request.
+
+# Line endings are LF wherever the formatter runs. The default is `Auto`, which
+# infers the ending from the file it is rewriting, so a checkout on a system that
+# hands rustfmt a CRLF file gets CRLF written back into it. The tracked-bytes
+# gate refuses a carriage return in tracked text, so without this line the
+# formatter and that gate can disagree, and the contributor who ran the formatter
+# is the one who meets the red check. docs/tracked-bytes.md is what refuses it.
+newline_style = "Unix"
