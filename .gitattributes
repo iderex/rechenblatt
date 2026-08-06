@@ -1,0 +1,63 @@
+# How git treats the bytes in this tree.
+#
+# This project compares renderings byte for byte and will hold document fixtures
+# whose exact bytes are the thing under test. A line ending rewritten on the way
+# into git changes such a fixture silently, and a file whose encoding is guessed
+# differently on two machines produces two results from one commit. So the
+# treatment is declared here rather than left to whatever each clone has
+# configured.
+#
+# `.github/scripts/check-tracked-bytes.sh` refuses what this file declares.
+# `docs/tracked-bytes.md` says what that check covers and what the Unicode guard
+# beside it covers.
+
+# Everything git reads as text is stored with LF, whatever the clone's
+# core.autocrlf says. eol=lf also fixes the checkout, so a working tree on
+# Windows holds the same bytes the index does.
+* text=auto eol=lf
+
+# Types that are text whatever the heuristic decides, so a short or unusual file
+# cannot be guessed into the wrong treatment.
+*.md         text eol=lf
+*.markdown   text eol=lf
+*.yml        text eol=lf
+*.yaml       text eol=lf
+*.toml       text eol=lf
+*.json       text eol=lf
+*.rs         text eol=lf
+*.sh         text eol=lf
+*.txt        text eol=lf
+.gitattributes text eol=lf
+.gitignore     text eol=lf
+
+# Document, image and font fixtures are bytes. `binary` unsets `text` and `diff`
+# together, so nothing normalises them and no diff pretends they are readable.
+*.xlsx  binary
+*.xlsm  binary
+*.xlsb  binary
+*.xltx  binary
+*.xls   binary
+*.ods   binary
+*.zip   binary
+*.bin   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.pdf   binary
+*.ttf   binary
+*.otf   binary
+*.ttc   binary
+*.woff  binary
+*.woff2 binary
+
+# Exceptions. A fixture that exists to prove this project handles a carriage
+# return, or a byte order mark, is text carrying the byte the rules above refuse.
+# Declaring it here is how it gets to stay, and the check prints every exception
+# it honoured so a green run cannot be read as a tree with none.
+#
+#   allow-cr    the file may hold a carriage return
+#   allow-bom   the file may start with a UTF-8 byte order mark
+#
+# Add the path with a comment saying which test needs it. There are none today,
+# which is what an empty section below means.

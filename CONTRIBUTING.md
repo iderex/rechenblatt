@@ -18,8 +18,8 @@ The tree holds documents and workflow guards and no code yet, so the run below i
 short. There is no build command and no test command in this repository today.
 Issue #3 adds the workspace and the build, issue #5 adds the test harness, and
 this guide gains those commands when they land. Until then, a green run means the
-two guards that read the tracked tree, and neither of them needs anything
-installed beyond git.
+guards that read the tracked tree, and they need git, bash and iconv and nothing
+else.
 
 Reject bidirectional and invisible Unicode, the same expression the
 `unicode-guard` workflow runs:
@@ -46,6 +46,19 @@ for sha in $(git rev-list --no-merges origin/main..HEAD); do
   fi
 done
 ```
+
+Check the tracked bytes, the same script the `tracked-bytes` workflow runs:
+
+```
+bash .github/scripts/check-tracked-bytes.sh .
+bash .github/scripts/prove-tracked-bytes.sh
+```
+
+The first refuses a carriage return, a byte order mark or a non-UTF-8 encoding in
+tracked text, and a tracked file whose declared type does not match its content.
+The second proves that each of those refusals bites, and the workflow runs it
+first for that reason. `docs/tracked-bytes.md` says what each one covers and where
+it stops.
 
 Two of the gates have no local form here, and that is stated rather than left to
 be discovered on a red pull request. The workflow audit runs
