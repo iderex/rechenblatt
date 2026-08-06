@@ -90,20 +90,25 @@ unchanged into the model.
 
 No decimal type is invented for this. That is the position and it is worth its
 own paragraph, because a decimal engine is the intuitive answer to a spreadsheet
-and it is the wrong one here. Every cached value in every corpus document was
-produced by binary floating point. An engine that computes in decimal disagrees
-with all of them in the last bits, which turns the disagreement count above from
-a signal into noise and destroys the one measurement this project has for whether
-its evaluator is right. The purpose here is to render what a document says, not
-to compute better than the tool that wrote it.
+and it is the wrong one here. The values a document carries were computed by an
+engine working in binary floating point, so an engine that computes in decimal
+disagrees with them in the last bits on arithmetic neither side got wrong. That
+turns the disagreement count above from a signal into noise and destroys the one
+measurement this project has for whether its evaluator is right. The purpose here
+is to render what a document says, not to compute better than the tool that wrote
+it.
 
 The rounding position is a display concern, and where it lands is issue #50,
-which holds the value types and the coercions with it. That the incumbent rounds
-a displayed result to fifteen significant decimal digits, and applies a further
-correction to a final subtraction of nearly equal numbers, is a claim in this
-record rather than a measurement: it is what the plan was written against, and
-issue #51 is what confirms or refutes it against documents rather than against
-memory.
+which holds the value types and the coercions with it.
+
+Three things in this section are claims rather than measurements, and they are
+what the plan was written against rather than what anything here has checked:
+that the accepted format stores a number as a binary floating point double, that
+the incumbent computes in the same, and that it rounds a displayed result to
+fifteen significant decimal digits with a further correction on a final
+subtraction of nearly equal numbers. Issue #51 is what confirms or refutes all
+three against documents rather than against memory, and it is worth reading the
+disagreement count with that in mind the first time it appears.
 
 ## The bound on the function library
 

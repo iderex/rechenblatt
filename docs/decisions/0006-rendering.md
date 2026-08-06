@@ -12,7 +12,7 @@ Issue: #34
 
 There are three ways to get a spreadsheet rendered and only one of them is this
 project. The choice is made here because every issue in this milestone is
-sequenced from it, and because two of the three would settle the licence question
+sequenced from it, and because one of the three would settle the licence question
 in issue #111 as a side effect rather than as a decision somebody made.
 
 `docs/decisions/0002-track-order.md` already put rendering first, on the argument
