@@ -1,0 +1,12 @@
+# Blank issues stay enabled. The templates below cover the three shapes that
+# arrive from outside; planning and decision issues fit none of them, and forcing
+# those into a bug form would cost more than it saves.
+blank_issues_enabled: true
+
+contact_links:
+  - name: Report something exploitable
+    url: https://github.com/iderex/rechenblatt/security/advisories/new
+    about: Anything that makes this software do something it should not goes here and not on the public tracker.
+  - name: Security policy
+    url: https://github.com/iderex/rechenblatt/blob/main/SECURITY.md
+    about: What is in scope, what a reporter can expect and by when, and what is not a vulnerability here.

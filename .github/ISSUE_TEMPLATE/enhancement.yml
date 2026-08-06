@@ -1,0 +1,51 @@
+name: Enhancement
+description: Something this project should do and does not.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        An issue here says what is wrong, what the evidence is, and what done
+        means. The three boxes below are those three, in that order.
+
+  - type: textarea
+    id: what-is-missing
+    attributes:
+      label: What is missing, and what it would let somebody do
+      description: >
+        Who is stuck without it and on what. A capability nobody is blocked on
+        is worth saying so about.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: The evidence
+      description: >
+        What makes this a real gap rather than a preference. If it is a number,
+        give the command that produced it so a reader can run it again and find
+        out whether it moved.
+    validations:
+      required: true
+
+  - type: textarea
+    id: done-when
+    attributes:
+      label: Done when
+      description: >
+        The conditions under which this issue can be closed, as a list. Each one
+        checkable by somebody who did not write it.
+    validations:
+      required: true
+
+  - type: input
+    id: scope
+    attributes:
+      label: Scope
+      description: >
+        The paths a change for this is expected to touch, if you know them. It
+        is how a reviewer sees at a glance that a change reached somewhere its
+        issue never mentioned. Leave it empty if you do not know the tree.
+    validations:
+      required: false

@@ -1,0 +1,61 @@
+name: Bug report
+description: Something behaves differently from what it says it does.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        If this is something exploitable, close this form and use the private
+        route instead: [SECURITY.md](https://github.com/iderex/rechenblatt/blob/main/SECURITY.md).
+        A public issue describing a way to make this software do something it
+        should not is a disclosure, whether or not that was the intent.
+
+        If the difference is that a document renders differently from another
+        product, the fidelity difference form is the one that fits.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What the software did, not what you think caused it.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected instead
+      description: If a document or a specification says so, name it.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce it
+      description: >
+        The exact commands, in order, and the input they were given. If a
+        document triggers it, say whether you can share it and under what terms.
+      render: shell
+    validations:
+      required: true
+
+  - type: input
+    id: commit
+    attributes:
+      label: Which commit
+      description: >
+        The commit you ran, from `git rev-parse HEAD`. There is no release yet,
+        so a version number is not what to give here.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: >
+        Output, a log, a stack trace. If you quote a number, give the command
+        that produced it, so it can be run again.
+    validations:
+      required: false

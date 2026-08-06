@@ -107,10 +107,9 @@ A line reading `Scope:` at column zero, naming the paths the change is expected 
 touch. It is how a reviewer sees at a glance that a change reached somewhere its
 issue never mentioned.
 
-Anything exploitable does not go on the public tracker. This repository has no
-published private reporting route yet; issue #11 delivers one. Until it lands, do
-not open a public issue describing a way to make this software do something it
-should not.
+Anything exploitable does not go on the public tracker. [SECURITY.md](SECURITY.md)
+holds the private route, what a reporter can expect and by when, and what is not a
+vulnerability here. Read it there rather than here, so the two cannot drift.
 
 ## What a good pull request body contains
 

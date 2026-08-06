@@ -1,0 +1,75 @@
+name: Fidelity difference
+description: A document renders differently here from how it renders elsewhere.
+labels: ["bug", "area: render"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This form asks for a document, a feature and two renderings, because that
+        is what a difference can be measured from. A description of what looked
+        wrong cannot be scored, cannot be turned into a corpus entry, and cannot
+        be shown to have been fixed.
+
+        A rendering difference is not a security matter. If the document also
+        makes the software do something it should not, use the private route in
+        [SECURITY.md](https://github.com/iderex/rechenblatt/blob/main/SECURITY.md)
+        instead of this form.
+
+  - type: textarea
+    id: document
+    attributes:
+      label: The document
+      description: >
+        Attach it if you can. Say where it came from, whether it may be
+        redistributed, and whether it contains personal data. A document that
+        cannot be shared is still worth reporting: say so, and describe the
+        feature precisely enough that a synthetic document can be built to match.
+    validations:
+      required: true
+
+  - type: input
+    id: feature
+    attributes:
+      label: The document feature this exercises
+      description: >
+        What in the document is being got wrong. For example a data bar with a
+        negative axis, a merged cell inside a frozen pane, a chart with a
+        secondary axis.
+    validations:
+      required: true
+
+  - type: textarea
+    id: this-rendering
+    attributes:
+      label: This project's rendering
+      description: >
+        The image this project produced, and the command that produced it.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reference-rendering
+    attributes:
+      label: The rendering you are comparing it against
+      description: >
+        The image, plus what produced it: the software, its version, the
+        platform and the date. A reference with no version attached cannot be
+        reproduced by anybody who disagrees with the comparison.
+    validations:
+      required: true
+
+  - type: input
+    id: where
+    attributes:
+      label: Where they differ
+      description: The sheet, the page and the cell range, so a reader knows where to look.
+    validations:
+      required: true
+
+  - type: input
+    id: commit
+    attributes:
+      label: Which commit
+      description: The commit you rendered at, from `git rev-parse HEAD`.
+    validations:
+      required: true
