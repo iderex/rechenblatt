@@ -35,20 +35,15 @@ below.
 
 ## The check names
 
-These are the names the checks appear under on a pull request, and they are a
-contract rather than a label. A branch protection rule matches a check by its
-literal name, so renaming a job removes that rule's gate and nothing goes red
-while it happens.
+`Formatting`, `Lint` and `Prove the format and lint gates bite`, declared in
+`.github/workflows/suite.yml` beside the build and the suite.
 
-| Check | What reproduces it here |
-| --- | --- |
-| `Formatting` | `cargo fmt --all -- --check` |
-| `Lint` | `cargo clippy --locked --workspace --all-targets` |
-| `Prove the format and lint gates bite` | `bash .github/scripts/prove-format-and-lint.sh` |
-
-They are declared in `.github/workflows/format-and-lint.yml`. Do not read a list
-of every check in this repository here; that list is printed by the commands
-`CONTRIBUTING.md` names, and one written down drifts.
+A name is a contract rather than a label, and `docs/checks.md` is the one place
+that carries every name in this repository beside the command that reproduces it.
+It is there rather than here so that there is one such place, and a checker
+refuses a name that only the workflow or only the document knows about. A second
+copy of the same three rows in this file would be exactly the drift that checker
+exists against.
 
 ## Where the rules live
 

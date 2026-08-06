@@ -13,11 +13,22 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # No `name:` on this job: the "Protect main" ruleset's required status check
-  # matches the literal check-run name, which defaults to the job id
-  # ("dependency-review") when no `name:` is set. Overriding it here would
-  # rename the check run and silently break the required-status-check gate.
+  # This job named itself after its id until now, because a comment here said a
+  # ruleset required the literal name `dependency-review` and that renaming it
+  # would break the gate. No ruleset on this repository requires any check, which
+  # is read rather than remembered:
+  #
+  #     gh api repos/iderex/rechenblatt/rulesets/20487256 \
+  #       --jq '[.rules[] | select(.type == "required_status_checks")] | length'
+  #     0
+  #
+  # So the name was free to fix and is now explicit, like every other job in the
+  # tree. An implicit name is the one that moves on its own: it follows the job
+  # id, and a job id is the kind of thing somebody tidies. docs/checks.md carries
+  # this name and .github/scripts/check-check-names.sh refuses a job that has
+  # none.
   dependency-review:
+    name: Dependency review
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

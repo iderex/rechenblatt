@@ -1,17 +1,33 @@
-# The build, the suite and the coverage floor.
+# The gates a change to the code is judged by: formatting, lint, the proof that
+# both of those bite, and the build, the suite and the coverage floor.
 #
-# One command builds the tree and one runs the suite, both the same commands a
-# contributor runs, both with --locked so a run that would change Cargo.lock fails
-# instead of updating it.
+# One workflow rather than several, so a reader who wants to know what runs on a
+# pull request opens one file. The guards that read the tracked tree rather than
+# the code stay in their own workflows beside this one; docs/checks.md is where
+# that division is argued and where the command that prints the whole set is.
 #
-# The coverage floor is read out of docs/test-harness.md rather than written here,
-# so the number and the reasoning for it cannot drift apart. A run that cannot
-# read it fails rather than assuming one.
+# THE JOB NAMES ARE THE CONTRACT. A branch protection rule matches a check by its
+# literal name, and a job with no `name:` produces a check named after its id, so
+# adding, removing or editing one of those lines renames the check and detaches
+# any rule that required it without anything going red. Every job below names
+# itself explicitly for that reason, and docs/checks.md carries the names beside
+# the commands that reproduce them.
 #
-# The coverage tool is compiled from a pinned version on the runner rather than
-# brought in as a third-party action, which keeps this gate first-party in the
-# same way the sign-off gate is.
-name: suite
+# Every gate here runs the same command a contributor runs, with the rules in
+# tracked files rather than on the command line, so a run here and a run on a
+# laptop cannot be given different rules. `--locked` is on every cargo command
+# that takes it: a run that would rewrite Cargo.lock fails instead of rewriting
+# it.
+#
+# There is no path filter anywhere in this file, and that is deliberate rather
+# than an omission. A job skipped by a path filter reports nothing at all, and a
+# required check reads nothing as never satisfied, so the pull request waits on a
+# gate that decided it had nothing to do.
+#
+# The file keeps the path it had when it held the build alone. docs/test-harness.md
+# names that path, and moving it would buy a tidier name at the cost of a document
+# pointing at nothing.
+name: gates
 
 on:
   push:
@@ -19,7 +35,8 @@ on:
   pull_request:
     branches: ["**"]
 
-# Read-only: the gate builds and tests, and writes nothing back.
+# Read-only at the workflow level. No job here needs more, and the job that
+# someday does is where the widening goes rather than this line.
 permissions:
   contents: read
 
@@ -28,6 +45,87 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  format:
+    name: Formatting
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # No step pushes, so do not persist the GITHUB_TOKEN in .git/config.
+          persist-credentials: false
+
+      - name: Show the formatter this commit pins
+        # rustup reads rust-toolchain.toml, which names rustfmt as a component, so
+        # this step installs it and puts its version in the log where a reader of a
+        # failed run can see which formatter produced the failure.
+        run: |
+          set -euo pipefail
+          cat rust-toolchain.toml
+          cargo fmt --version
+
+      - name: Check the formatting without writing
+        run: cargo fmt --all -- --check
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Show the linter this commit pins
+        run: |
+          set -euo pipefail
+          cat rust-toolchain.toml
+          cargo clippy --version
+
+      - name: Lint every target
+        # No -D on this line. The denial is in Cargo.toml, so this command means
+        # the same thing here and on a contributor's machine. --all-targets
+        # reaches the tests as well as the libraries.
+        run: cargo clippy --locked --workspace --all-targets
+
+  proof:
+    name: Prove the format and lint gates bite
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Plant each mistake and require the gate to refuse it
+        # Nine legs. Every refusal against a tree holding exactly the mistake it
+        # is about, the same tree with that one thing changed back, and - for the
+        # lint gate - the mistake again with the denial taken out of Cargo.toml,
+        # which is what says the tracked line is doing the refusing.
+        run: bash .github/scripts/prove-format-and-lint.sh
+
+  names:
+    name: Names match the document
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Prove each refusal bites
+        # First, for the same reason the tracked-bytes proof runs before its
+        # scan: a checker that has stopped biting reports a clean tree, and a
+        # clean report from a dead check is worse than a red one.
+        run: bash .github/scripts/prove-check-names.sh
+
+      - name: Refuse a check name only one side knows about
+        run: bash .github/scripts/check-check-names.sh .
+
   suite:
     name: Build and suite
     runs-on: ubuntu-latest
@@ -60,12 +158,18 @@ jobs:
         run: cargo test --locked --workspace
 
       - name: Install the coverage tool
+        # Compiled on the runner from a pinned version rather than brought in as a
+        # third-party action, which keeps this gate first-party in the same way
+        # the sign-off gate is.
         run: |
           set -euo pipefail
           rustup component add llvm-tools-preview
           cargo install cargo-llvm-cov --locked --version "$LLVM_COV_VERSION"
 
       - name: Measure coverage against the declared floor
+        # The floor is read out of docs/test-harness.md rather than written here,
+        # so the number and the reasoning for it cannot drift apart. A run that
+        # cannot read it fails rather than assuming one.
         run: |
           set -euo pipefail
           floor=$(sed -n 's/^Coverage floor: \([0-9][0-9]*\)$/\1/p' docs/test-harness.md)
