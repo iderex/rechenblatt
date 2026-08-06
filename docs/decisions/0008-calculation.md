@@ -54,9 +54,10 @@ with itself.
 
 Every value the model can display carries which route produced it: read from the
 document, or evaluated here. It is a property of the value rather than a log
-line, for the same reason `docs/decisions/0002-track-order.md` gives for the
-model generally, and because a fidelity difference is attributable only if the
-report can say which of the two the number came from.
+line, which is the same shape issue #18 requires of the unrepresented content
+list and for the same reason: a log line does not survive into a report an
+operator reads. A fidelity difference is attributable only if the report can say
+which of the two produced the number.
 
 A fidelity difference on a cell whose value was read from the document is a
 reading or a rendering problem. The same difference on a cell this project
