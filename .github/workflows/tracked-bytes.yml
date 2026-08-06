@@ -1,0 +1,56 @@
+# Tracked bytes. This project compares renderings byte for byte and will hold
+# document fixtures whose exact bytes are the thing under test, so the bytes of
+# its own tree cannot be ambiguous. The gate refuses a carriage return, a byte
+# order mark and an encoding that is not UTF-8 in tracked text, and refuses a
+# tracked file whose declared type does not match its content, in both directions.
+#
+# What .gitattributes declares, this refuses. The attributes alone are not the
+# guard: git's own conversion rewrites CRLF on the way into the index and leaves a
+# lone CR untouched, does nothing about a byte order mark, and never judges an
+# encoding.
+#
+# The proof runs before the scan. A checker that has stopped biting would
+# otherwise report a clean tree, and a clean report from a dead check is worse
+# than a red one. docs/tracked-bytes.md says what this covers and what the Unicode
+# guard beside it covers.
+name: tracked-bytes
+
+on:
+  # Every branch and every pull request, matching the other guard that reads the
+  # tracked tree.
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+# Read-only: the gate reads the index and writes nothing.
+permissions:
+  contents: read
+
+# Cancel a superseded run on the same ref; the scan is cheap and idempotent.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tracked-bytes:
+    name: Refuse ambiguous tracked bytes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # No step pushes, so do not persist the GITHUB_TOKEN in .git/config.
+          persist-credentials: false
+
+      - name: Prove each refusal bites
+        # Twelve legs: every property refused by a repository holding exactly the
+        # byte it is about, and refused by nothing else; and the same repository
+        # with that one byte changed back refusing nothing at all. A checker that
+        # refuses everything fails the second leg, one that refuses nothing fails
+        # the first.
+        run: bash .github/scripts/prove-tracked-bytes.sh
+
+      - name: Refuse tracked bytes the attributes forbid
+        run: bash .github/scripts/check-tracked-bytes.sh .
