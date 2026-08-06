@@ -26,9 +26,10 @@ cargo test --locked --workspace
 it was on the machine that built this commit before you. The compiler version is
 pinned in `rust-toolchain.toml` and rustup fetches it on the first build.
 
-The suite is two tests over a workspace that is otherwise empty. Issue #5 adds the
-harness, the fixture rules and the coverage floor, and this guide gains those
-commands when they land.
+`docs/test-harness.md` is where a test goes, what a failing one has to print, where
+fixture documents live and what has to be beside them, and the coverage floor with
+the reasoning for the number. Read it before writing the first test in a new
+crate.
 
 The guards below read the tracked tree rather than the code, and they need git,
 bash and iconv and nothing else.

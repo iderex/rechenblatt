@@ -1,0 +1,82 @@
+# The build, the suite and the coverage floor.
+#
+# One command builds the tree and one runs the suite, both the same commands a
+# contributor runs, both with --locked so a run that would change Cargo.lock fails
+# instead of updating it.
+#
+# The coverage floor is read out of docs/test-harness.md rather than written here,
+# so the number and the reasoning for it cannot drift apart. A run that cannot
+# read it fails rather than assuming one.
+#
+# The coverage tool is compiled from a pinned version on the runner rather than
+# brought in as a third-party action, which keeps this gate first-party in the
+# same way the sign-off gate is.
+name: suite
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+# Read-only: the gate builds and tests, and writes nothing back.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  suite:
+    name: Build and suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Pinned. An unpinned build tool is a dependency that changes without a
+      # commit saying so.
+      LLVM_COV_VERSION: "0.8.7"
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # No step pushes, so do not persist the GITHUB_TOKEN in .git/config.
+          persist-credentials: false
+
+      - name: Show the toolchain this commit pins
+        # rustup reads rust-toolchain.toml and fetches the pinned compiler, so
+        # this step both installs it and puts the version in the log where a
+        # reader of a failed run can see which compiler produced the failure.
+        run: |
+          set -euo pipefail
+          cat rust-toolchain.toml
+          rustc --version
+          cargo --version
+
+      - name: Build
+        run: cargo build --locked --workspace --all-targets
+
+      - name: Run the suite
+        run: cargo test --locked --workspace
+
+      - name: Install the coverage tool
+        run: |
+          set -euo pipefail
+          rustup component add llvm-tools-preview
+          cargo install cargo-llvm-cov --locked --version "$LLVM_COV_VERSION"
+
+      - name: Measure coverage against the declared floor
+        run: |
+          set -euo pipefail
+          floor=$(sed -n 's/^Coverage floor: \([0-9][0-9]*\)$/\1/p' docs/test-harness.md)
+          if [ -z "$floor" ]; then
+            echo "::error::docs/test-harness.md declares no coverage floor this gate can read."
+            echo "::error::Expected a line reading 'Coverage floor: <number>' at column zero."
+            exit 1
+          fi
+          if [ "$(printf '%s\n' "$floor" | wc -l)" -ne 1 ]; then
+            echo "::error::docs/test-harness.md declares more than one coverage floor."
+            exit 1
+          fi
+          echo "floor read from docs/test-harness.md: ${floor}%"
+          cargo llvm-cov --locked --workspace --summary-only --fail-under-lines "$floor"
