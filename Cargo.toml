@@ -1,6 +1,6 @@
-# The workspace. Five components and the edges between them, set while there is
-# nothing in them, because which component may depend on which is an
-# architectural claim that is cheap to make now and expensive to retrofit.
+# The workspace and the edges between its components, set while there is nothing
+# in them, because which component may depend on which is an architectural claim
+# that is cheap to make now and expensive to retrofit.
 #
 # The edges, in one direction only:
 #
@@ -9,12 +9,19 @@
 #   render    depends on model and calc.
 #   macro     depends on model and calc, and not on render. The macro track reads
 #             and changes a workbook; it does not become a second renderer.
-#   cli       depends on all four and is what an operator runs.
+#   host      depends on nothing here. It is the filesystem, the network and the
+#             clock, and it is the only component allowed to hold them.
+#   cli       depends on all five and is what an operator runs.
 #
 # A crate cannot use what it does not depend on, so this file is the enforcement
-# and not a diagram of one. Issue #8 adds the refusal for the narrower rule about
-# untrusted input, and issue #101 is where the rest of the architecture becomes
-# tests.
+# and not a diagram of one. Issue #101 is where the rest of the architecture
+# becomes tests.
+#
+# Each member declares which side of the input boundary it is on, in a
+# `[package.metadata.rechenblatt]` table in its own manifest. A component on the
+# parsing side may not depend on one that can reach a capability, and
+# crates/cli/tests/boundary.rs refuses the edge by name.
+# docs/decisions/0003-input-boundary.md is where that is argued.
 
 [workspace]
 resolver = "3"
@@ -23,8 +30,19 @@ members = [
   "crates/calc",
   "crates/render",
   "crates/macro",
+  "crates/host",
   "crates/cli",
 ]
+
+[workspace.metadata.rechenblatt]
+# Crates from outside this workspace that a parsing component may depend on.
+#
+# It is empty, and empty is a decision rather than a placeholder: nothing outside
+# this workspace has been read closely enough to say what it can reach. The check
+# fails closed against it, so the first dependency a parser needs arrives with
+# somebody having looked at it and written the name down here, in the commit that
+# needs it. A component on the host side is not judged against this list.
+pure-may-depend-on = []
 
 [workspace.package]
 version = "0.0.0"
@@ -44,6 +62,7 @@ rechenblatt-model = { path = "crates/model", version = "0.0.0" }
 rechenblatt-calc = { path = "crates/calc", version = "0.0.0" }
 rechenblatt-render = { path = "crates/render", version = "0.0.0" }
 rechenblatt-macro = { path = "crates/macro", version = "0.0.0" }
+rechenblatt-host = { path = "crates/host", version = "0.0.0" }
 
 [workspace.lints.rust]
 # The means record's policy, held by the compiler rather than by review. An
