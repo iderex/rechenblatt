@@ -1,0 +1,15 @@
+[package]
+name = "rechenblatt-render"
+description = "The rendering engine: geometry, text, fills, pagination."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+rechenblatt-model.workspace = true
+rechenblatt-calc.workspace = true
+
+[lints]
+workspace = true

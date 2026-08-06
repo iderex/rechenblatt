@@ -1,0 +1,52 @@
+# The workspace. Five components and the edges between them, set while there is
+# nothing in them, because which component may depend on which is an
+# architectural claim that is cheap to make now and expensive to retrofit.
+#
+# The edges, in one direction only:
+#
+#   model     depends on nothing here. It is what a document says, read once.
+#   calc      depends on model.
+#   render    depends on model and calc.
+#   macro     depends on model and calc, and not on render. The macro track reads
+#             and changes a workbook; it does not become a second renderer.
+#   cli       depends on all four and is what an operator runs.
+#
+# A crate cannot use what it does not depend on, so this file is the enforcement
+# and not a diagram of one. Issue #8 adds the refusal for the narrower rule about
+# untrusted input, and issue #101 is where the rest of the architecture becomes
+# tests.
+
+[workspace]
+resolver = "3"
+members = [
+  "crates/model",
+  "crates/calc",
+  "crates/render",
+  "crates/macro",
+  "crates/cli",
+]
+
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+# The minimum supported version is the pin in rust-toolchain.toml and there is no
+# second number. Cargo refuses an older compiler here, at the start of the build,
+# instead of letting it fail later inside a dependency with a message about
+# syntax. docs/decisions/0001-means.md is where that policy is argued.
+rust-version = "1.97.1"
+repository = "https://github.com/iderex/rechenblatt"
+# No `license` field. This repository has no licence yet; it is the first entry of
+# issue #111 and it is delivered by issue #88. Naming one here would decide it by
+# accident, so every package below also sets `publish = false`.
+
+[workspace.dependencies]
+rechenblatt-model = { path = "crates/model", version = "0.0.0" }
+rechenblatt-calc = { path = "crates/calc", version = "0.0.0" }
+rechenblatt-render = { path = "crates/render", version = "0.0.0" }
+rechenblatt-macro = { path = "crates/macro", version = "0.0.0" }
+
+[workspace.lints.rust]
+# The means record's policy, held by the compiler rather than by review. An
+# exception is a narrower allow with its reason beside it in the source, which is
+# visible in a diff; this denial is what makes that visible.
+unsafe_code = "deny"

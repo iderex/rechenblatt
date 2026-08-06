@@ -1,0 +1,14 @@
+# The toolchain two machines building this commit must agree on. rustup reads this
+# file and uses this version whatever is otherwise default, so a build here does
+# not depend on what a contributor happens to have installed.
+#
+# The minimum supported version is this pin. Cargo enforces it through
+# `rust-version` in Cargo.toml, which refuses an older compiler at the start of the
+# build. docs/decisions/0001-means.md argues both, and says the pin moves in a
+# commit whose message names what needed the newer compiler.
+
+[toolchain]
+channel = "1.97.1"
+# rustfmt and clippy are named here so a fresh clone has them before the gate that
+# runs them exists. Issue #4 is that gate.
+components = ["rustfmt", "clippy"]

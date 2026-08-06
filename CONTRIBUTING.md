@@ -14,12 +14,24 @@ git clone https://github.com/iderex/rechenblatt.git
 cd rechenblatt
 ```
 
-The tree holds documents and workflow guards and no code yet, so the run below is
-short. There is no build command and no test command in this repository today.
-Issue #3 adds the workspace and the build, issue #5 adds the test harness, and
-this guide gains those commands when they land. Until then, a green run means the
-guards that read the tracked tree, and they need git, bash and iconv and nothing
-else.
+Build the tree and run the suite:
+
+```
+cargo build --locked --workspace
+cargo test --locked --workspace
+```
+
+`--locked` belongs to both commands. It makes a build that would change
+`Cargo.lock` fail rather than update it, so the dependency set is the same here as
+it was on the machine that built this commit before you. The compiler version is
+pinned in `rust-toolchain.toml` and rustup fetches it on the first build.
+
+The suite is two tests over a workspace that is otherwise empty. Issue #5 adds the
+harness, the fixture rules and the coverage floor, and this guide gains those
+commands when they land.
+
+The guards below read the tracked tree rather than the code, and they need git,
+bash and iconv and nothing else.
 
 Reject bidirectional and invisible Unicode, the same expression the
 `unicode-guard` workflow runs:

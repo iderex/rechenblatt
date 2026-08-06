@@ -1,0 +1,17 @@
+[package]
+name = "rechenblatt"
+description = "The command an operator drives."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+rechenblatt-model.workspace = true
+rechenblatt-calc.workspace = true
+rechenblatt-render.workspace = true
+rechenblatt-macro.workspace = true
+
+[lints]
+workspace = true
