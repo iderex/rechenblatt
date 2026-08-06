@@ -13,12 +13,13 @@
 /// Every one of them is a crate this package depends on, so the list cannot name
 /// something that is not linked in. The test below is the other direction: it
 /// cannot silently stop naming something the workspace does carry.
-pub fn components() -> [&'static str; 4] {
+pub fn components() -> [&'static str; 5] {
     [
         rechenblatt_model::COMPONENT,
         rechenblatt_calc::COMPONENT,
         rechenblatt_render::COMPONENT,
         rechenblatt_macro::COMPONENT,
+        rechenblatt_host::COMPONENT,
     ]
 }
 

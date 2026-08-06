@@ -7,5 +7,12 @@ rust-version.workspace = true
 repository.workspace = true
 publish = false
 
+# The parsing side of the input boundary. This component reads bytes it did not
+# create, so it may not depend on anything that can open a path, make a network
+# call or read a clock. crates/cli/tests/boundary.rs refuses such a dependency
+# and docs/decisions/0003-input-boundary.md argues why.
+[package.metadata.rechenblatt]
+side = "pure"
+
 [lints]
 workspace = true

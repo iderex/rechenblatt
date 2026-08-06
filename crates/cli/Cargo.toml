@@ -7,11 +7,19 @@ rust-version.workspace = true
 repository.workspace = true
 publish = false
 
+# The host side of the input boundary. This component may reach a capability,
+# which is why nothing on the parsing side may depend on it.
+# crates/cli/tests/boundary.rs refuses such a dependency and
+# docs/decisions/0003-input-boundary.md argues why.
+[package.metadata.rechenblatt]
+side = "host"
+
 [dependencies]
 rechenblatt-model.workspace = true
 rechenblatt-calc.workspace = true
 rechenblatt-render.workspace = true
 rechenblatt-macro.workspace = true
+rechenblatt-host.workspace = true
 
 [lints]
 workspace = true
