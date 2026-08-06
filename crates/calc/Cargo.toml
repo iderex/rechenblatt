@@ -1,0 +1,14 @@
+[package]
+name = "rechenblatt-calc"
+description = "Calculation, as far as the page needs it."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+rechenblatt-model.workspace = true
+
+[lints]
+workspace = true
