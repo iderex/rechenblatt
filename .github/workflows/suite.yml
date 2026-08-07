@@ -185,6 +185,31 @@ jobs:
           echo "floor read from docs/test-harness.md: ${floor}%"
           cargo llvm-cov --locked --workspace --summary-only --fail-under-lines "$floor"
 
+  impure:
+    name: Declare what needs an environment
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Prove each refusal bites
+        # First, for the same reason the other checkers here are preceded by
+        # their proofs: a checker that has stopped biting reports a clean
+        # register, and a clean report from a dead check is worse than a red one.
+        run: bash .github/scripts/prove-needs-an-environment.sh
+
+      - name: Refuse an entry that names no need, no reason or no script
+        run: bash .github/scripts/check-needs-an-environment.sh .
+
+      - name: Print what is outside the default suite, and run none of it
+        # The list, on every pull request, so the set of things that cannot be
+        # pure is visible in a run rather than only in a file somebody opens.
+        # Naming no entry is what makes this print rather than run.
+        run: bash .github/scripts/needs-an-environment.sh list
+
   headless:
     name: Headless and unelevated
     runs-on: ubuntu-latest
@@ -200,11 +225,16 @@ jobs:
         # writable filesystem outside the workspace and one tmpfs, no display
         # server, no host font directory and no elevated rights. The job above
         # says the suite passes; this one says what it does not need in order to.
-        run: bash .github/scripts/run-sealed.sh suite
+        #
+        # Through the harness rather than straight at the script, so the route a
+        # contributor is told to use is the route this gate proves. It also puts
+        # the environment record in the log beside the result, which is what
+        # stops a number from here being quoted as one from the default suite.
+        run: bash .github/scripts/needs-an-environment.sh sealed-suite
 
       - name: The probes, every one of which must fail there
         # A sealed environment that is not actually sealed passes the same suite,
         # so the environment needs its own proof. Each probe asserts that one of
         # those things IS available, so every one of them has to fail there, and
         # each failure has to carry a cause rather than a timeout.
-        run: bash .github/scripts/run-sealed.sh probes
+        run: bash .github/scripts/needs-an-environment.sh sealed-probes

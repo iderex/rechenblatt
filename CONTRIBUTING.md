@@ -165,13 +165,24 @@ of those things present, and then runs four probes that each reach for one of th
 and must all fail:
 
 ```
-bash .github/scripts/run-sealed.sh suite
-bash .github/scripts/run-sealed.sh probes
+bash .github/scripts/needs-an-environment.sh sealed-suite
+bash .github/scripts/needs-an-environment.sh sealed-probes
 ```
 
 Both need docker and the first fetch of the pinned image needs the network. The
 `Headless and unelevated` check runs exactly these two commands, so a contributor
 without docker sees the same result on the pull request instead.
+
+That runner is the one route to anything here that cannot run in the default
+suite, and it runs nothing without being told which entry to run. To see what is
+behind it and what each entry needs:
+
+```
+bash .github/scripts/needs-an-environment.sh list
+```
+
+`docs/needs-an-environment.md` argues the rule, and it is worth reading before
+adding a test that wants something a plain checkout does not have.
 
 Code that reads bytes this project did not create stays behind a boundary. A
 parser takes bytes and returns a value or a typed error: it opens no path it was

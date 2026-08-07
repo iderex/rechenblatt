@@ -15,8 +15,10 @@ command beside the guards that read the tracked tree.
 
 The default suite is pure. No display server, no elevated rights, no host font
 directory and no network. Anything that needs a real environment goes to a
-separate harness named for what it needs, which is issue #103, and is not part of
-this run.
+separate harness named for what it needs, `.github/scripts/needs-an-environment.sh`,
+which runs nothing without being told which entry to run and is no part of this
+command. `docs/needs-an-environment.md` argues it and says what its checker
+cannot judge.
 
 That is a condition the first test met rather than something the suite is audited
 for later, and the section below is how it is held.
@@ -116,6 +118,14 @@ the failure and the cause on it, not a pass somewhere else.
 
 The probes are `#[ignore]`d, so the default suite never runs them. Only the gate
 does.
+
+**How both halves are reached.** Neither is invoked directly any more. Both are
+entries in the register `docs/needs-an-environment.md` describes, and the gate
+and a contributor both reach them through that runner, which will not start
+either without being named and which wraps the result in the environment it ran
+in. `run-sealed.sh` is still the thing that does the work; what changed is that
+nothing reaches it without going past a record saying what it needs and why it
+cannot be pure.
 
 **What each half answers for.** Outside the workspace the container answers: it is
 read-only there, and probe/write-outside is what says so. Inside the workspace it
