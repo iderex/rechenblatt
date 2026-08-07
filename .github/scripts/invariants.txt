@@ -39,6 +39,7 @@ Files: *.rs
 Prevents: A component on the parsing side of the input boundary reaching the network, which turns a malformed document into somebody else's problem instead of a parse error.
 Pattern: std::net|TcpStream|TcpListener|UdpSocket|to_socket_addrs|reqwest|ureq|isahc|curl::|hyper::client
 Except: crates/host/ the component the input boundary declares as the one that may hold the filesystem, the network and the clock
+Except: crates/model/tests/environment.rs the probe that shows a sealed environment has no route to a socket cannot show it without opening one, and it is ignored by name so the default suite never runs it
 
 Id: secret-in-a-plain-string
 Files: *.rs
@@ -49,3 +50,4 @@ Id: absolute-path-in-a-test
 Files: */tests/*.rs tests/*.rs
 Prevents: A test that passes on the machine it was written on and fails everywhere else, and one that writes outside the directory it created.
 Pattern: "/[A-Za-z]|"[A-Za-z]:\\
+Except: crates/model/tests/environment.rs the host font directories and the path outside the workspace are the subjects of the scan and the probes in that file, so refusing the strings would remove the thing being shown rather than a dependency on the machine
