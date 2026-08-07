@@ -131,6 +131,13 @@ somebody was sent by email.
 The end-to-end harness there logs into a running server. The impure surface here
 is different in kind, so the counterpart is not a login harness but the general
 rule that anything needing a real environment lives in a separate named harness.
+That harness exists and is argued in `docs/needs-an-environment.md`. It is NOT a
+merge condition and it is not going to become one: every entry in it needs an
+environment, so it fails the third of the three conditions this document sets out
+below, where a check may not be able to redden a change that did not touch
+anything. A required harness of that shape stops the queue for a reason nobody in
+the pull request can fix. Its register's checker is a separate matter, reads a
+file, needs nothing, and runs in the ordinary gate.
 
 The wiki lint reads documentation that lives outside the tree. This project's
 documentation is in the tree, so the counterpart is a lint over `docs/` rather

@@ -141,6 +141,20 @@ failing exactly as it is written.
 `Scorecard analysis` is a score, and it never appears on a pull request, so it
 could not be required even if it were eligible.
 
+`Declare what needs an environment` reads the register behind the harness in
+`docs/needs-an-environment.md` and refuses an entry naming no environment, no
+reason or no script. It meets all three conditions: it refuses named things, its
+proof plants each of those mistakes and requires the refusal, and it reads one
+tracked file and nothing outside this repository. It is outside the table for the
+same reason the headless gate is, which is that this document quotes names read
+from completed runs and it has none yet. It joins the table in the same change
+that adds it to the ruleset.
+
+The harness that check reads the register of is a different thing and is not a
+candidate at all. Every entry in it needs an environment, which is the third
+condition failing by construction, and `docs/quality-parity.md` records that
+where the parity map is argued.
+
 The headless gate issue #7 delivers meets the first and third conditions and
 carries its own proof, so it is eligible on the second. Its check-run name is not
 quoted here because this document quotes names read from completed runs and it
