@@ -33,6 +33,11 @@
 
 set -euo pipefail
 
+# Both are invoked as `bash <path>` below rather than executed, because every
+# script in this directory is tracked without an executable bit and every caller
+# including the workflow reaches them the same way. Executing one directly works
+# on a filesystem that ignores the mode and exits 126 on one that does not, which
+# is a failure that appears only on the gate. It appeared there once.
 here=$(cd "$(dirname "$0")" && pwd)
 checker="$here/check-needs-an-environment.sh"
 runner="$here/needs-an-environment.sh"
@@ -65,7 +70,7 @@ expect() {
   local name=$1 want=$2 want_exit=$3
   local dir="$work/$name" output status=0 got
   cases=$((cases + 1))
-  output=$("$checker" "$dir" 2>&1) || status=$?
+  output=$(bash "$checker" "$dir" 2>&1) || status=$?
   got=$(printf '%s\n' "$output" | sed -n 's/^REFUSED \([a-z-]*\):.*/\1/p' | sort | tr '\n' ' ')
   if [ "$got" != "$want" ] || [ "$status" -ne "$want_exit" ]; then
     echo "FAILED $name"
@@ -141,7 +146,7 @@ expect two-mistakes "entry-without-a-need entry-without-a-reason " 1
 expect_unjudgeable() {
   local name=$1 status=0
   cases=$((cases + 1))
-  "$checker" "$work/$name" >/dev/null 2>&1 || status=$?
+  bash "$checker" "$work/$name" >/dev/null 2>&1 || status=$?
   if [ "$status" -ne 2 ]; then
     echo "FAILED $name is unjudgeable"
     echo "  expected exit 2, got $status"
@@ -205,25 +210,25 @@ ran="$runner_root/ran.txt"
 # did something sensible with no argument is one a contributor runs by accident.
 rm -f "$ran"
 bare_status=0
-bare=$("$runner" "" "$runner_root" 2>&1) || bare_status=$?
+bare=$(bash "$runner" "" "$runner_root" 2>&1) || bare_status=$?
 note "no argument exits 2" "$([ "$bare_status" -eq 2 ] && echo yes || echo no)"
 note "no argument runs nothing" "$([ -e "$ran" ] && echo no || echo yes)"
 note "no argument prints the register" "$(holds "$bare" writes-a-file)"
 
 unknown_status=0
-unknown=$("$runner" not-an-entry "$runner_root" 2>&1) || unknown_status=$?
+unknown=$(bash "$runner" not-an-entry "$runner_root" 2>&1) || unknown_status=$?
 note "an unknown id exits 2" "$([ "$unknown_status" -eq 2 ] && echo yes || echo no)"
 note "an unknown id runs nothing" "$([ -e "$ran" ] && echo no || echo yes)"
 note "an unknown id prints the ids that do exist" "$(holds "$unknown" writes-a-file)"
 
 list_status=0
-listed=$("$runner" list "$runner_root" 2>&1) || list_status=$?
+listed=$(bash "$runner" list "$runner_root" 2>&1) || list_status=$?
 note "list exits 0" "$([ "$list_status" -eq 0 ] && echo yes || echo no)"
 note "list runs nothing" "$([ -e "$ran" ] && echo no || echo yes)"
 note "list prints what each entry needs" "$(holds "$listed" 'needs   nothing')"
 
 passed_status=0
-passed=$("$runner" writes-a-file "$runner_root" 2>&1) || passed_status=$?
+passed=$(bash "$runner" writes-a-file "$runner_root" 2>&1) || passed_status=$?
 note "a named entry exits 0 when its command succeeds" \
   "$([ "$passed_status" -eq 0 ] && echo yes || echo no)"
 note "the named entry actually ran" "$([ -e "$ran" ] && echo yes || echo no)"
@@ -236,7 +241,7 @@ for wanted in 'needs-an-environment:' 'result record begins' 'commit ' 'host ' \
 done
 
 failed_status=0
-failed=$("$runner" fails "$runner_root" 2>&1) || failed_status=$?
+failed=$(bash "$runner" fails "$runner_root" 2>&1) || failed_status=$?
 note "a named entry whose command fails exits 1" \
   "$([ "$failed_status" -eq 1 ] && echo yes || echo no)"
 note "a failed entry says so in its record" "$(holds "$failed" 'fails FAILED')"
