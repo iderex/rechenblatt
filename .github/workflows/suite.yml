@@ -184,3 +184,27 @@ jobs:
           fi
           echo "floor read from docs/test-harness.md: ${floor}%"
           cargo llvm-cov --locked --workspace --summary-only --fail-under-lines "$floor"
+
+  headless:
+    name: Headless and unelevated
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: The default suite, with none of it available
+        # The suite again, this time in a container with no network route, no
+        # writable filesystem outside the workspace and one tmpfs, no display
+        # server, no host font directory and no elevated rights. The job above
+        # says the suite passes; this one says what it does not need in order to.
+        run: bash .github/scripts/run-sealed.sh suite
+
+      - name: The probes, every one of which must fail there
+        # A sealed environment that is not actually sealed passes the same suite,
+        # so the environment needs its own proof. Each probe asserts that one of
+        # those things IS available, so every one of them has to fail there, and
+        # each failure has to carry a cause rather than a timeout.
+        run: bash .github/scripts/run-sealed.sh probes

@@ -16,7 +16,10 @@ command beside the guards that read the tracked tree.
 The default suite is pure. No display server, no elevated rights, no host font
 directory and no network. Anything that needs a real environment goes to a
 separate harness named for what it needs, which is issue #103, and is not part of
-this run. Issue #7 is where that condition becomes a check rather than a sentence.
+this run.
+
+That is a condition the first test met rather than something the suite is audited
+for later, and the section below is how it is held.
 
 ## Where a test goes
 
@@ -77,6 +80,62 @@ The scratch directories those legs use are built and removed by the test itself
 rather than by a crate brought in for it. `docs/decisions/0001-means.md` says a
 new dependency arrives with the issue that needs it, and twenty lines of
 `std::fs` is not that issue.
+
+## Headless and unelevated
+
+Stated as an intention this decays on the first test that quietly needs a display
+to rasterise something, or a system font directory, or a temporary path only an
+administrator can write. The decay is invisible until somebody without those tries
+to contribute, and by then the repair is spread across hundreds of tests.
+
+Two things hold it, and they hold different halves.
+
+**The environment.** `.github/scripts/run-sealed.sh suite` runs the whole default
+suite inside a container with the network route removed, the filesystem read-only
+apart from the workspace and one tmpfs, no display server, no host font directory
+and the calling user's own ids rather than root. The script refuses to continue if
+it lands as root anyway, because a suite that passed as root proves nothing about
+a suite run by a person. The image is pinned by digest, not by tag: a tag moves,
+and the bytes a gate ran against must not.
+
+**The probes.** A sealed environment that is not actually sealed passes the same
+suite, so the environment needs its own proof. Four probes at the bottom of
+`crates/model/tests/environment.rs` each assert that one of those things IS
+available: a display, a font the host installed, a socket, a writable path
+outside the workspace. Every one of them has to fail in the sealed environment,
+and
+`run-sealed.sh probes` requires all four failures, each carrying its own marker
+and a cause. A failure reading as a timeout is refused, because a probe that timed
+out and a probe that hung read the same on a log and neither says the thing was
+absent.
+
+Not claimed: that a probe passes on an arbitrary machine. Three of them do
+wherever the thing they name is present, and the fourth needs an account that may
+write under `/usr/local`, which a contributor's usually may not. The gate reads
+the failure and the cause on it, not a pass somewhere else.
+
+The probes are `#[ignore]`d, so the default suite never runs them. Only the gate
+does.
+
+**What each half answers for.** Outside the workspace the container answers: it is
+read-only there, and probe/write-outside is what says so. Inside the workspace it
+answers for nothing, because the workspace is the one place the run must be able
+to write. So `run-sealed.sh suite` reads `git status` before and after and refuses
+a run that left the tree changed, which is how a test writing outside the path it
+made for itself is caught. The residual is a test that writes and then removes its
+own stray file: that passes, and nothing here sees it.
+
+Fonts are the one half the environment cannot check on every machine, because a
+contributor's own machine does have a font directory. So the default suite carries
+a scan instead: `no_source_reaches_for_the_host_s_fonts` refuses a source naming a
+host font directory or calling a library's load-the-host's-fonts routine. It has
+its own legs, and it builds the strings it looks for out of pieces so that the
+file doing the looking does not contain them. Excluding that file by name would
+have worked too and would have left one file in the tree where the rule does not
+apply.
+
+A test's fonts come from this repository or from `tests/fixtures/`, so a run does
+not depend on what happens to be installed.
 
 ## The coverage floor
 
