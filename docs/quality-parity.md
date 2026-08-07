@@ -45,7 +45,7 @@ document is a copy of it taken when the map was written.
 | `Analyze (csharp)` | replaced | the same scanning gate, plus a second analyser | #94, #95 |
 | `DCO sign-off` | matched | the same check, under the same name | already in the tree, document in #10 |
 | `Deterministic PR-hygiene checks` | no deliverer | nothing in this tracker delivers it | none |
-| `Enforce greppable invariants` | matched | the same check, under a name to be fixed | #98 |
+| `Enforce greppable invariants` | matched | the same check, under the identical name | #98 |
 | `Reject Trojan Source Unicode` | matched | the same check, under the same name | already in the tree |
 | `Audit workflows (zizmor)` | matched | the same check, under the same name | already in the tree |
 | `prettier` | replaced | the formatting gate for code, the lint for documents | #4, #100 |
@@ -84,9 +84,10 @@ issue: nothing in this tracker delivers a check over the shape of a pull request
 That is a hole in the plan rather than a deviation with a reason, and it is
 recorded here as one.
 
-`Enforce greppable invariants` carries over whole. The target's check name is the
-one this project should adopt rather than invent a synonym for, since a name that
-differs for no reason costs a reader the mapping.
+`Enforce greppable invariants` carries over whole, under the target's own name
+rather than a synonym, since a name that differs for no reason costs a reader the
+mapping. `docs/invariants.md` is where the check is argued and where the list it
+reads is named.
 
 `Reject Trojan Source Unicode` is already here, under the identical name, and the
 name is worth keeping identical.
@@ -162,6 +163,27 @@ These exist because of what this software does, not because the target has them.
 | Input boundary check | The rule that parsing code reaches no capability is worth nothing unless the build refuses the edge. | #8 |
 | Corpus provenance check | A corpus of real documents is a place personal data and unclear licences arrive, and neither is caught by reading a diff. | #26, #90 |
 | Architecture rules as tests | The dependency directions this project is built on are claims, and a claim that no test reads decays. | #101 |
+
+## Rules named for the greppable gate that it does not refuse
+
+Two rules were named as invariants for `Enforce greppable invariants` and neither
+ended up in the list it reads. They are written here as the rules they actually
+are, so that neither is left looking like something a check refuses.
+
+Nothing here judges whether document content reaches a log format string.
+Whether an interpolated value came from a document is a property of where that
+value came from, and no reading of the text decides it: the same format string is
+correct or a disclosure depending on what was bound to the variable three
+functions earlier. The enforceable neighbour is a format string that is not a
+literal, which is a different rule and is not substituted for this one. #81 is
+where what a log may contain is decided.
+
+A fixture without a provenance record is refused, and not by that gate.
+`crates/model/tests/fixture_registry.rs` refuses it in the suite and
+`tests/fixtures/README.md` carries the shape of a record. A second refusal
+beside it would give one rule two places to be repaired and two places to
+disagree, so the greppable list does not carry it. `docs/invariants.md` says the
+same thing where somebody reading that gate will meet it.
 
 ## Which of these are merge conditions
 

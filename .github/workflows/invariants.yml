@@ -1,0 +1,55 @@
+# Greppable invariants. Some rules in this repository are text facts, and a text
+# fact can be refused by reading the tree rather than by somebody noticing it in
+# a diff. This gate reads a tracked list of them and refuses a tracked file that
+# breaks one.
+#
+# The list is `.github/scripts/invariants.txt` and the checker holds no pattern
+# of its own, so adding an invariant is adding a record and a leg rather than
+# editing a walk. `docs/invariants.md` argues that split, says what a reading of
+# text cannot judge, and carries the two invariants that were named for this gate
+# and are refused somewhere else or nowhere.
+#
+# The proof runs before the scan, matching the other guards that read the tracked
+# tree. A checker that has stopped biting reports a clean tree, and a clean
+# report from a dead check is worse than a red one.
+name: invariants
+
+on:
+  # Every branch and every pull request, matching the other guards that read the
+  # tracked tree rather than the code.
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+# Read-only: the gate reads tracked files and writes nothing.
+permissions:
+  contents: read
+
+# Cancel a superseded run on the same ref; the scan is cheap and idempotent.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  invariants:
+    name: Enforce greppable invariants
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # No step pushes, so do not persist the GITHUB_TOKEN in .git/config.
+          persist-credentials: false
+
+      - name: Prove each refusal bites
+        # Eighteen legs. Every invariant refused by a repository holding exactly
+        # its violation and refused by nothing else, the same repository with
+        # that one thing changed back refusing nothing at all, both directions of
+        # the exception register, and the loader stopping the run rather than
+        # judging a tree against a list it could not read.
+        run: bash .github/scripts/prove-invariants.sh
+
+      - name: Refuse a tracked file that breaks one
+        run: bash .github/scripts/check-invariants.sh .

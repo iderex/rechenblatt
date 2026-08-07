@@ -44,6 +44,7 @@ red while that happens, which is the whole problem with it.
 | `Build and suite` | `cargo build --locked --workspace --all-targets`, then `cargo test --locked --workspace`, then the coverage floor |
 | `Names match the document` | `bash .github/scripts/prove-check-names.sh`, then `bash .github/scripts/check-check-names.sh .` |
 | `Refuse ambiguous tracked bytes` | `bash .github/scripts/prove-tracked-bytes.sh`, then `bash .github/scripts/check-tracked-bytes.sh .` |
+| `Enforce greppable invariants` | `bash .github/scripts/prove-invariants.sh`, then `bash .github/scripts/check-invariants.sh .`; `docs/invariants.md` argues what it covers |
 | `Reject Trojan Source Unicode` | the `git grep` expression in `CONTRIBUTING.md` |
 | `DCO sign-off` | the sign-off loop in `CONTRIBUTING.md` |
 | `Audit workflows (zizmor)` | no local form without a Python package runner and network access |
