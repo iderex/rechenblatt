@@ -68,6 +68,30 @@ well, so an exception cannot outlive the file it was written for. Both direction
 have a leg. Every run prints each exception it honoured, so a green run cannot be
 read as a tree with none.
 
+## What a whole-file exception costs
+
+An exception is a prefix, so it can name a directory, a file, or everything under
+either. `crates/model/tests/environment.rs` is excepted from two invariants as a
+whole file, and that is wider than a prefix naming one line could be, because the
+register has no such prefix. The cost is exact and worth stating: inside that
+file, neither of those two invariants refuses anything ever again. A socket
+opened there for a reason that is not the probe, and an absolute path written
+there by somebody who has forgotten what the file is for, both pass.
+
+It is still the right shape rather than a hole. The file is a scan for host font
+directories and four probes that each reach for something a sealed environment
+does not have, so every string those invariants match is the subject of the test
+holding it. A pattern cannot tell a subject from a dependency, and neither can a
+narrower prefix. What holds that file instead is
+`.github/scripts/run-sealed.sh probes`, which requires every one of those probes
+to FAIL in the sealed environment and requires each failure to carry a cause, so
+a probe that stopped reaching for the thing it names stops passing that gate.
+
+The general rule this is the first instance of: an exception is granted where the
+pattern's match is the test's subject, and the reason field says which subject.
+An exception granted because a rule was inconvenient has no such sentence, and
+that is what a reviewer is checking for.
+
 ## Running it
 
     bash .github/scripts/prove-invariants.sh
