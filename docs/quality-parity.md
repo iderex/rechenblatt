@@ -45,7 +45,7 @@ document is a copy of it taken when the map was written.
 | `Analyze (csharp)` | replaced | the same scanning gate, plus a second analyser | #94, #95 |
 | `DCO sign-off` | matched | the same check, under the same name | already in the tree, document in #10 |
 | `Deterministic PR-hygiene checks` | no deliverer | nothing in this tracker delivers it | none |
-| `Enforce greppable invariants` | matched | the same check, under a name to be fixed | #98 |
+| `Enforce greppable invariants` | matched | the same check, under the identical name | #98 |
 | `Reject Trojan Source Unicode` | matched | the same check, under the same name | already in the tree |
 | `Audit workflows (zizmor)` | matched | the same check, under the same name | already in the tree |
 | `prettier` | replaced | the formatting gate for code, the lint for documents | #4, #100 |
@@ -84,9 +84,10 @@ issue: nothing in this tracker delivers a check over the shape of a pull request
 That is a hole in the plan rather than a deviation with a reason, and it is
 recorded here as one.
 
-`Enforce greppable invariants` carries over whole. The target's check name is the
-one this project should adopt rather than invent a synonym for, since a name that
-differs for no reason costs a reader the mapping.
+`Enforce greppable invariants` carries over whole, under the target's own name
+rather than a synonym, since a name that differs for no reason costs a reader the
+mapping. `docs/invariants.md` is where the check is argued and where the list it
+reads is named.
 
 `Reject Trojan Source Unicode` is already here, under the identical name, and the
 name is worth keeping identical.
@@ -130,6 +131,13 @@ somebody was sent by email.
 The end-to-end harness there logs into a running server. The impure surface here
 is different in kind, so the counterpart is not a login harness but the general
 rule that anything needing a real environment lives in a separate named harness.
+That harness exists and is argued in `docs/needs-an-environment.md`. It is NOT a
+merge condition and it is not going to become one: every entry in it needs an
+environment, so it fails the third of the three conditions this document sets out
+below, where a check may not be able to redden a change that did not touch
+anything. A required harness of that shape stops the queue for a reason nobody in
+the pull request can fix. Its register's checker is a separate matter, reads a
+file, needs nothing, and runs in the ordinary gate.
 
 The wiki lint reads documentation that lives outside the tree. This project's
 documentation is in the tree, so the counterpart is a lint over `docs/` rather
@@ -162,6 +170,60 @@ These exist because of what this software does, not because the target has them.
 | Input boundary check | The rule that parsing code reaches no capability is worth nothing unless the build refuses the edge. | #8 |
 | Corpus provenance check | A corpus of real documents is a place personal data and unclear licences arrive, and neither is caught by reading a diff. | #26, #90 |
 | Architecture rules as tests | The dependency directions this project is built on are claims, and a claim that no test reads decays. | #101 |
+
+## Rules named for the greppable gate that it does not refuse
+
+Two rules were named as invariants for `Enforce greppable invariants` and neither
+ended up in the list it reads. They are written here as the rules they actually
+are, so that neither is left looking like something a check refuses.
+
+Nothing here judges whether document content reaches a log format string.
+Whether an interpolated value came from a document is a property of where that
+value came from, and no reading of the text decides it: the same format string is
+correct or a disclosure depending on what was bound to the variable three
+functions earlier. The enforceable neighbour is a format string that is not a
+literal, which is a different rule and is not substituted for this one. #81 is
+where what a log may contain is decided.
+
+A fixture without a provenance record is refused, and not by that gate.
+`crates/model/tests/fixture_registry.rs` refuses it in the suite and
+`tests/fixtures/README.md` carries the shape of a record. A second refusal
+beside it would give one rule two places to be repaired and two places to
+disagree, so the greppable list does not carry it. `docs/invariants.md` says the
+same thing where somebody reading that gate will meet it.
+
+## The code scanning threshold
+
+Code scanning threshold: medium
+
+That line is read by `.github/scripts/check-code-scanning.sh` rather than the
+severity being written into the workflow, so the threshold and the reasoning for
+it cannot drift apart. A run that cannot read the line fails rather than
+assuming one, and `.github/scripts/prove-code-scanning.sh` has a leg that takes
+the line away and requires the check to stop.
+
+Why this rung and not another. The scan reads the shipped code with a set of
+lints that are off by default and are all about one question: what a value that
+came out of somebody else's document can do to the process that read it.
+`.github/scripts/code-scanning-lints.txt` places each of them, and the three
+rungs mean three different things here. `high` is an abort: the process ends
+because a document did not carry what the code expected, which turns a malformed
+file into an outage for everything else on the host. `medium` is a value going
+wrong quietly, where a size wraps or a component takes a decision that belonged
+to the operator surface. `low` is a conversion or a slice that is usually
+correct and is worth seeing.
+
+A threshold at `high` would leave the wrapping arithmetic advisory, which is the
+class that defeats a ceiling rather than announcing itself. A threshold at `low`
+would gate on constructs the shipped code will legitimately hold once it does
+arithmetic on geometry, and a gate that has to be argued around is one that gets
+argued around. `medium` refuses both kinds of abort and the quiet wrong value,
+and reports the rest without failing anything, which keeps the low rung a
+finding list rather than a verdict.
+
+The rung is a property of this project rather than of the analyser: nothing in
+clippy calls any lint `high`, and every placement in that register is this
+repository's judgement with its reason written beside it.
 
 ## Which of these are merge conditions
 

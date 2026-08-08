@@ -1,191 +1,214 @@
 # 0008 Calculation
 
-An evaluator is built. The value a document already carries is used where it is
-present and consistent, evaluation happens where it is not and wherever display
-depends on it, and every displayed value records which of the two produced it.
+This project evaluates formulas rather than trusting the values a document
+carries, uses the carried value where it is present and consistent, always
+evaluates what the page depends on, and records for every displayed value which
+of the two produced it.
 
 Status: accepted
-Date: 2026-08-06
+Date: 2026-08-08
 Issue: #44
 
 ## Context
 
 A workbook usually carries the last computed value of every formula cell beside
-the formula, so a renderer can display a document without evaluating anything.
-That is fast, and for a file the incumbent suite saved a moment ago it is also
-correct.
+the formula itself. A renderer can read those values and never evaluate
+anything. That is fast, it is correct for a file the incumbent suite last saved,
+and it is wrong for a file written by a tool that left the cache empty, or stale,
+or filled with what a different function library thought.
 
-It stops being correct for a file a tool wrote without filling the cache, for one
-whose cache is stale, and for one whose cache was written by something that
-computed a different answer. And it does not survive the rest of this plan at
-all. Conditional formatting rules are formulas evaluated at display time, which
-is milestone 6 and the gap issue #52 puts first, so a renderer that never
-evaluates cannot paint it. The macro track changes cells and needs the
-consequences, which is milestone 8.
+It also does not survive the rest of this plan. Conditional formatting rules are
+formulas evaluated when the page is drawn, so a renderer that never evaluates
+cannot paint the feature the gap analysis names first. The macro track changes
+cells and needs the consequences of the change, and no cache in a file knows
+about an edit made after it was written.
 
-That the cache exists in the accepted format, that a document can ask to be fully
-recalculated on load, and that a stale cache is common in files written by other
-tools are claims here rather than measurements. Issue #51 is where they become a
-number, because it scores the evaluator against the values corpus documents
-already carry, and that comparison is the same measurement read from the other
-side.
+The opposite position is no better. Evaluating everything and ignoring the file
+means every rendering waits on a full recalculation, and it means a document
+whose formulas use a function this project has not implemented renders worse than
+it would have if the answer already in the file had simply been read.
 
-## The rule about the value a document carries
+## The decision, in full
 
-The cached value is used when it is present and consistent, and consistent means
-three things at once: the cell carries a value, the document does not ask for a
-full recalculation, and nothing the cell depends on has been evaluated to a
-different answer in this run.
+Build the evaluator. It lives in `crates/calc`, it reads the model and nothing
+else in this workspace, and the model never computes: what a document says and
+what a document's formulas mean are two questions, and
+`docs/decisions/0003-workbook-model.md` is why the first one has a single
+answer.
 
-Evaluation is forced in four cases. When any of those three conditions fails.
-When the value feeds a display decision rather than being one, which covers
-conditional formatting conditions, data bar and colour scale bounds, and chart
-series ranges. When a macro has changed a cell, because the consequences of that
-change are the whole point of the macro track. And when the operator asks for it,
-which is a switch rather than a guess.
+### The rule for a carried value
 
-The first case is worth stating in the direction it actually runs: consistency is
-not a property of a cell, it is a property of a cell and everything under it. A
-cell whose cached value is intact but whose input this run computed differently
-is not consistent, and taking its cache would publish a workbook that disagrees
-with itself.
+Where a formula cell carries a value, that value is used, provided it is
+consistent. Consistent means all of:
 
-## How a value's origin is recorded
+- the document does not ask for a full calculation when it is opened,
+- the cell's formula is not volatile, so its result does not depend on when it
+  is asked,
+- every cell the formula depends on is itself either a constant or a formula
+  cell with a consistent carried value,
+- and nothing in this session has changed a cell the formula depends on.
 
-Every value the model can display carries which route produced it: read from the
-document, or evaluated here. It is a property of the value rather than a log
-line, which is the same shape issue #18 requires of the unrepresented content
-list and for the same reason: a log line does not survive into a report an
-operator reads. A fidelity difference is attributable only if the report can say
-which of the two produced the number.
+The third condition is what makes the rule closed under dependency: a value
+inherited from a precedent that had to be evaluated is an evaluated value, and
+calling it a carried one would be the quiet half-truth this whole record exists
+to avoid.
 
-A fidelity difference on a cell whose value was read from the document is a
-reading or a rendering problem. The same difference on a cell this project
-evaluated is a calculation problem. Those go to different issues and often to
-different people, and guessing which one it is from the picture is how a
-milestone is spent in the wrong place.
+### When evaluation is forced
 
-## When the evaluator and the document disagree
+- A formula cell with no carried value.
+- Any cell that fails the consistency rule above.
+- Every value a display decision depends on: the condition of a conditional
+  formatting rule, a formula behind a data bar or a colour scale threshold, a
+  defined name a displayed formula resolves through. These are evaluated at
+  display time whatever the file carries, because the file carries the result of
+  the cell and not the result of the rule. Issue #53 is where the rules reach
+  the evaluator.
+- Everything downstream of a change. When the macro track writes a cell, every
+  cell that depends on it is evaluated, and their carried values are discarded
+  rather than reconciled.
 
-A disagreement is reported. It is never resolved silently in either direction.
+### How the origin of a value is recorded
 
-Where the evaluator runs and produces a different answer from the cached value,
-both values are kept, the cell is recorded as disagreeing, and the count of
-disagreements is available per document without anybody reading a picture. The
-evaluated value is what is displayed, because the alternative is displaying a
-number this project believes is wrong.
+Every displayed value carries which of three things produced it:
 
-The reason it is reported rather than merely handled: a disagreement is the
-single most informative event this engine can produce. It is either a defect in
-this evaluator, or a document whose cache is stale, or a document written by
-something that computes differently, and all three are things the corpus should
-be able to tell somebody. Issue #51 is where that count becomes the measurement
-of this half of the project.
+- **read**, taken from the document,
+- **evaluated**, computed here,
+- **unavailable**, neither: the formula uses something this project does not
+  implement and the document carried nothing to fall back on.
 
-## Precision and rounding
+This is a property of the value, not a line in a log. A fidelity difference in a
+cell is then attributable before anybody opens a debugger: a difference on a
+**read** value is a rendering or formatting difference, and a difference on an
+**evaluated** value is a difference in this project's arithmetic. Guessing which
+of those two it is has a cost that recurs on every difference, which is what
+paying for the field once buys.
 
-Arithmetic is binary floating point, the same IEEE 754 double the accepted format
-stores and the incumbent computes in. Display rounding is applied at display and
-never to the stored value, so a value that was read or evaluated survives
-unchanged into the model.
+**unavailable** is never rendered as zero, as blank, or as an error the document
+did not contain. It is a value that says what is missing, it is an entry in the
+report, and issue #64 is where the same principle governs what the renderer will
+not draw.
 
-No decimal type is invented for this. That is the position and it is worth its
-own paragraph, because a decimal engine is the intuitive answer to a spreadsheet
-and it is the wrong one here. The values a document carries were computed by an
-engine working in binary floating point, so an engine that computes in decimal
-disagrees with them in the last bits on arithmetic neither side got wrong. That
-turns the disagreement count above from a signal into noise and destroys the one
-measurement this project has for whether its evaluator is right. The purpose here
-is to render what a document says, not to compute better than the tool that wrote
-it.
+### When the evaluator and the carried value disagree
 
-The rounding position is a display concern, and where it lands is issue #50,
-which holds the value types and the coercions with it.
+Both exist and they differ: that is a reportable event and never a silent
+choice. The value carries the disagreement, with the cell, the formula, both
+values and the comparison that separated them, and the report counts them.
 
-Three things in this section are claims rather than measurements, and they are
-what the plan was written against rather than what anything here has checked:
-that the accepted format stores a number as a binary floating point double, that
-the incumbent computes in the same, and that it rounds a displayed result to
-fifteen significant decimal digits with a further correction on a final
-subtraction of nearly equal numbers. Issue #51 is what confirms or refutes all
-three against documents rather than against memory, and it is worth reading the
-disagreement count with that in mind the first time it appears.
+The displayed value in that case is the carried one, and the reason is narrow:
+the reference renderings the corpus is measured against were produced from the
+file, so displaying this project's own answer instead would turn every
+arithmetic difference into a rendering difference and hide both. The
+disagreement is not suppressed by that choice; it is reported, which is the
+opposite.
 
-## The bound on the function library
+Comparing the two costs a full evaluation of a document that did not need one, so
+it is what the measurement harness does on every corpus document rather than
+what the operator surface does on every request. Issue #51 is that measurement,
+and it is the number that says how much of this project's arithmetic agrees with
+the arithmetic already in circulation.
 
-The function set the incumbent offers is large and most of it never reaches a
-page. This project implements what the corpus needs and refuses the rest by name,
-which is issue #49.
+### Precision and where rounding happens
 
-The rule by which a function is added is a corpus document that needs it. Not a
-list somebody copied from a specification, not a function that seems likely, and
-not a batch added because they are in the same family. The issue adding a
-function names the corpus document that requires it and the effect on the
-measured number, so the function set grows from evidence and can be read back as
-a history of what documents actually contain.
+The arithmetic is binary floating point, in the double precision every
+implementation of this format uses, and not an invented decimal type.
 
-What this costs is a project that will not answer yes to "does it support
-function X" for a long time. That is the honest state, and it is better than the
-alternative, which is a function implemented from a specification, never
-exercised by a document, and wrong in the case that matters.
+The reason is measurement rather than taste. Every carried value in every corpus
+document was produced by binary floating point, so a decimal evaluator would
+disagree with the corpus in the last digits of a large fraction of cells while
+being, in some abstract sense, more correct. This project's claim is about
+matching documents, and the arithmetic that produced those documents is the
+arithmetic to use.
 
-The bound moves in one direction only. A function is never removed because no
-current corpus document uses it, since the corpus grows and a removal would make
-a previously passing document fail for a reason unrelated to any change.
+Rounding is display rounding and it happens at the display boundary. The
+evaluator returns the unrounded result; the number format decides what is shown,
+including the fifteen significant decimal digits the incumbent shows for a
+general number and the rounding a format applies on top of that. An evaluator
+that rounds inside itself makes every later sum wrong in a way nobody can trace,
+which is why the position is named here rather than left to whoever writes the
+first function.
 
-## What this record does not decide
+The incumbent's own departures from the format - its treatment of certain near
+integers and its date arithmetic including the day that does not exist - are
+compatibility behaviour rather than arithmetic. They are implemented where they
+are met and each one is a named case with a corpus document behind it, rather
+than a general licence to be approximately right.
 
-It does not decide how a formula is parsed, which is issue #45, nor how the
-dependency graph is built and ordered, which is issue #47, nor what a cycle does,
-which is issue #48, nor the value types and coercions, which is issue #50. Those
-implement this decision and each is free to argue with it in its own body rather
-than quietly departing from it.
+### The bound on the function library
 
-Later calculation issues reference this record rather than restating it. Measured
-at the date above, none of them restates the rule about the cached value:
+The function set of the incumbent is enormous and most of it never reaches a
+page. This project implements what the corpus needs.
 
-    for n in 45 46 47 48 49 50 51 53; do
-      printf '#%s ' "$n"
-      gh issue view $n --repo iderex/rechenblatt --json body --jq .body |
-        grep -ciE 'cached value|cached-value|last computed value'
-    done
-    #45 0
-    #46 1
-    #47 0
-    #48 0
-    #49 0
-    #50 0
-    #51 1
-    #53 0
+A function is added when a corpus document needs it. That is the whole rule, and
+it means the set grows from a measurement rather than from a list somebody
+copied out of a reference. Issue #49 is where the set is implemented and where
+what is not implemented is refused loudly rather than silently returning
+something plausible.
 
-Two matches, and neither is a restatement. Issue #46 is a different rule: a
-reference into another workbook resolves to the value the document carries and
-never opens a file, which is a statement about not touching the filesystem, the
-input boundary in `docs/decisions/0014-input-boundary.md`, and it stands whatever
-this record says. Issue #51 names the cached value because comparing against it
-is the measurement, which is this record being used rather than repeated.
+An unimplemented function does not produce an error value the document could
+have contained, because a reader cannot tell that apart from a document that
+really holds one. It produces **unavailable**, it names the function, and the
+report counts the name so the next function to implement is the one the corpus
+asks for most.
 
-The grep is a coarse instrument and the sentence it supports is narrow: it finds
-the phrase, and a restatement written in other words would pass it. What it rules
-out is the cheap kind of drift, a later issue repeating this rule in the words
-this record uses, and that is all it is offered as.
+## What this costs
 
-Nothing refuses a restatement that arrives later. The command above is what a
-reviewer runs, and widening it into a check over issue bodies is not something
-this tree does today.
+**Two answers to keep straight.** Every value has an origin and some values have
+two candidates. That is a field on every value, a branch in the reporting, and a
+sentence in every document that quotes a number.
+
+**A full evaluation on the measurement path.** Comparing against carried values
+means evaluating documents that did not need evaluating, on every corpus run.
+That is bought deliberately: the comparison is the only thing that says whether
+the evaluator is right.
+
+**The displayed value is the file's, so this project's own arithmetic is not
+what a reader sees.** A user who wants this project's answer to a formula gets
+it from the report rather than from the page. That is the honest trade for a
+fidelity number that measures rendering rather than arithmetic, and it is
+revisited if the two are ever measured to agree closely enough for it not to
+matter.
+
+**Binary floating point brings its own surprises.** Sums that do not associate
+and a general format that hides the last bits are inherited rather than solved.
+The alternative was disagreeing with every document in the corpus.
 
 ## What would reverse this
 
-A measurement showing the cache can be trusted, from issue #51: if corpus
-documents disagree with a correct evaluator so rarely that the evaluation is
-buying nothing, the cheaper engine is the one that reads and does not compute.
+A measurement, from issue #51, showing that carried values in real documents are
+so often stale or absent that the carried-value rule is a fast path nobody takes.
+Then the rule inverts: evaluate always, and the carried value becomes only a
+comparison.
 
-That reversal is bounded even if the number supports it. Conditional formatting
-and the macro track both need evaluation of things no cache holds, so what such a
-number could retire is evaluating cells that already carry a value, and never the
-evaluator itself.
+The other direction reverses it too. If evaluation turns out to be far more
+expensive than the plan assumes on documents of the size operators actually have,
+the forced-evaluation set shrinks to what display strictly requires, and the
+record says so with the timing that showed it.
 
-The opposite reversal has a condition too. If the disagreement count turns out to
-be dominated by this project's own defects rather than by stale caches, that is
-not a reason to trust the cache. It is a reason to fix the evaluator, and the
-record says so here so the argument is not available later as a shortcut.
+Either way, reversing means naming the measurement and its date. Not restating
+this record with the sign changed.
+
+## Rejected alternatives
+
+**Trust the file and never evaluate.** The fastest thing that could work, and it
+is what a renderer built only for files the incumbent saved would do. It cannot
+paint a conditional format, it cannot survive a macro changing a cell, and it
+renders a file with an empty cache as a page of blanks while reporting nothing
+wrong. It is also unfalsifiable: with no evaluator there is no second opinion, so
+a document whose cached values are wrong renders wrongly and passes every check
+here.
+
+**Evaluate everything and ignore what the file carries.** Clean, and it throws
+away the best available check on this project's own arithmetic. It also makes an
+unimplemented function fatal to a cell that already had a perfectly good answer
+in the file.
+
+**A decimal arithmetic type.** More correct in isolation and wrong for this
+purpose, because it disagrees in the last digits with every document the corpus
+holds. It is worth revisiting only if a corpus measurement shows the documents
+themselves were produced by something other than binary floating point, which is
+a claim no reading of the format supports today.
+
+**Implementing the incumbent's function list.** Years of work, most of it for
+functions no page has ever displayed, and it produces a project that is one
+release behind a moving list forever. The corpus decides the set instead, which
+is the same principle the rest of this plan runs on.

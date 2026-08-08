@@ -1,0 +1,92 @@
+# The lints the code scanning gate reads the shipped code with, and what each
+# one is worth.
+#
+# This file is the list. `.github/scripts/check-code-scanning.sh` is the code
+# that applies it and holds no lint of its own, so adding a lint is adding a
+# record here and nothing else. `docs/code-scanning.md` argues the lens, says
+# where the instrument stops, and names the threshold this list is judged
+# against.
+#
+# The lens is narrower than the `Lint` gate beside it and it is not the same
+# question. That gate denies the compiler's and the linter's default set over
+# every target, which is a question about correctness and style. This one asks
+# one thing only: what can a value that came out of somebody else's document do
+# to the process that read it. Every lint below is off by default, so none of
+# them is reached by the gate beside this one, and each is here because it names
+# a way a reader aborts, wraps or walks off the end when handed bytes it did not
+# expect.
+#
+# One record per lint, separated by a blank line. Three fields, all required,
+# and a record missing any of them stops the run rather than being skipped:
+#
+#   Lint      the name clippy knows it by, which is what a refusal prints and
+#             what the flag is built from
+#   Severity  one of `high`, `medium` or `low`. A lint at or above the
+#             threshold is denied and fails the run; one below it is forced to
+#             warn, so it is reported and uploaded without failing anything.
+#             The threshold is in `docs/quality-parity.md` rather than here or
+#             in the workflow, because it is a statement about how strict this
+#             project is and that belongs beside the reasoning for it
+#   Prevents  what this refuses, in one sentence
+#
+# Every record here has a leg in `.github/scripts/prove-code-scanning.sh` that
+# plants exactly the construct it names and requires the gate to refuse it, and
+# a leg that takes the record out of this file and requires the same construct
+# to pass, which is what says the tracked line is doing the refusing rather than
+# a tool default.
+
+Lint: clippy::unwrap_used
+Severity: high
+Prevents: A reader ending the process because a document did not carry the value it expected, which turns a malformed file into a denial of service against everything else the host was doing.
+
+Lint: clippy::panic
+Severity: high
+Prevents: The same abort written out by hand, which is the form that survives a search for `unwrap` and is the one somebody adds while debugging.
+
+Lint: clippy::indexing_slicing
+Severity: high
+Prevents: An index taken from a document being used as an index into a buffer, which is a panic on every value the document was not supposed to be able to name.
+
+Lint: clippy::unreachable
+Severity: high
+Prevents: An abort standing where somebody decided a case could not arise, which is a claim about the input and the input is a stranger's.
+
+Lint: clippy::todo
+Severity: high
+Prevents: An unfinished branch reaching a release as a crash rather than as an error the caller can report.
+
+Lint: clippy::unimplemented
+Severity: high
+Prevents: The same unfinished branch under the other spelling, which is the one a reader searching for `todo` does not find.
+
+Lint: clippy::panic_in_result_fn
+Severity: high
+Prevents: A function whose signature promises to report a failure aborting instead, which is the worst version because every caller was written believing the signature.
+
+Lint: clippy::expect_used
+Severity: medium
+Prevents: The disciplined abort, which carries a message and is still an abort. It is separated from `unwrap` by a rung rather than allowed, because the message makes it easier to argue for and no easier to survive.
+
+Lint: clippy::arithmetic_side_effects
+Severity: medium
+Prevents: A size, an offset or a count read out of a document overflowing, which is how a ceiling is passed by a number that wrapped below it.
+
+Lint: clippy::exit
+Severity: medium
+Prevents: A component ending the process from inside, which takes the decision away from the operator surface that was supposed to hold it.
+
+Lint: clippy::mem_forget
+Severity: medium
+Prevents: A value whose cleanup is skipped deliberately, which is how a bounded resource stops being bounded.
+
+Lint: clippy::cast_possible_truncation
+Severity: low
+Prevents: A width read out of a document losing its high bits on the way into a narrower type, which produces a small number from a large one and passes every ceiling underneath it. Below the threshold because the shipped code will hold conversions that are provably in range, and a gate here would be argued around rather than fixed.
+
+Lint: clippy::integer_division
+Severity: low
+Prevents: A quotient silently truncating where a document's geometry needed the remainder. Below the threshold for the same reason as the cast above: most instances are correct and the report is what makes the incorrect ones visible.
+
+Lint: clippy::string_slice
+Severity: low
+Prevents: A byte range taken through text, which panics on a boundary inside a character and therefore on the first document not written in the alphabet the code was tested with. Below the threshold only because the shipped code holds no text handling yet, and this record is the one most likely to move up when it does.

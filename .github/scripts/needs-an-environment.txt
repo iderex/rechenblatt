@@ -1,0 +1,37 @@
+# What cannot be proved in the default suite, and what each entry needs instead.
+#
+# The default suite is pure: no display server, no elevated rights, no host font
+# directory, no network. A few things cannot be proved under that rule at all,
+# and letting one of them into the default run is how the pure suite gets
+# quietly polluted - it passes on the machine it was written on and turns into a
+# mystery for the first contributor without whatever it silently wanted.
+#
+# They live here instead. `.github/scripts/needs-an-environment.sh` runs them and
+# holds no entry of its own, so adding one is writing a record here and a leg in
+# the proof beside it. `.github/scripts/check-needs-an-environment.sh` refuses a
+# record this file cannot be read from, and `docs/needs-an-environment.md` argues
+# the rule and says what the checker cannot judge.
+#
+# One record per entry, separated by a blank line. Four fields, all required:
+#
+#   Id       the name the runner is invoked with, and the name a result carries
+#   Needs    the environment this entry requires, in the terms somebody
+#            reproducing it has to satisfy
+#   Because  why it cannot be proved in the pure suite, in one sentence
+#   Run      the command, from the repository root
+#
+# A record with no `Id` or no `Run` stops the run, because an entry the runner
+# cannot name or cannot execute is not an entry. A record with no `Needs` or no
+# `Because` is refused, because those two are the whole reason this file exists:
+# an entry nobody can reproduce and an entry nobody can argue with are the two
+# ways a harness like this becomes a place things are hidden.
+
+Id: sealed-suite
+Needs: a container runtime the calling account can drive without elevation, and, on a first run only, a network route for the single fetch of the image that .github/scripts/run-sealed.sh pins by digest
+Because: the claim is about what the default suite does NOT need, and no test can assert that a display, a network route, host fonts or elevated rights are absent from the machine that is running it.
+Run: bash .github/scripts/run-sealed.sh suite
+
+Id: sealed-probes
+Needs: the same container runtime, and the sealed environment the entry above builds, which is an image carrying no font file and started with no network route and a read-only filesystem
+Because: a sealed environment that is not actually sealed passes the same suite, so the environment needs a proof of its own, and a probe written to read the environment is the one test that must not be pure.
+Run: bash .github/scripts/run-sealed.sh probes
