@@ -136,6 +136,7 @@ a source for reaching outside the sealed environment is the font scan in
 
 Like every other check here it is advisory today.
 `docs/quality-parity.md` carries the rule for which checks belong in front of the
-default branch and issue #93 is where that is decided. This one reads files, needs
-nothing, and cannot be red for a reason outside the change, which is the shape
-that document says is eligible.
+default branch and `docs/required-checks.md` is where that is decided. This one
+reads files, needs nothing, and cannot be red for a reason outside the change,
+which is the shape those documents call eligible. It is not in the required set
+they name, and nothing is required by the ruleset today in any case.

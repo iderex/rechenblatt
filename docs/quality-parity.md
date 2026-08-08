@@ -241,8 +241,10 @@ every check that runs here is advisory and a red one is a mark beside a change
 that can still be merged. That is the state this map is written against, and it
 is the single largest deviation from the target, which requires thirteen.
 
-Which checks become merge conditions is #93, and the split belongs there rather
-than here. What this document commits to is the reasoning for the split: a check
+Which checks become merge conditions is `docs/required-checks.md`, and the split
+belongs there rather than here. It names six and says what stays beside them,
+against a ruleset that still requires none, so the split is written down and not
+yet applied. What this document commits to is the reasoning for it: a check
 becomes a merge condition when it refuses something specific, has been shown to
 bite, and cannot be red for a reason outside the change. A check stays advisory
 while it is a score, a scan whose findings need triage rather than a verdict, or

@@ -101,9 +101,13 @@ gh api repos/iderex/rechenblatt/rulesets/20487256 \
 0
 ```
 
-Which of these names should stand in front of the default branch is issue #93.
-Until it is answered, these gates are run and read rather than required, and this
-table is the list that issue will choose from.
+Which of these names stand in front of the default branch is answered in
+`docs/required-checks.md`, which names six of them and gives the reason for each.
+The answer is not yet in the ruleset: the command above still returns zero, so
+these gates are run and read rather than required, and a red one is a mark beside
+a change that can still be merged. That document says what moves a name from this
+table into the required set, and that the ruleset and the document change
+together.
 
 ## The shape every workflow here holds
 

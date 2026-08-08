@@ -154,4 +154,6 @@ One entry is also run by a job of its own, `Headless and unelevated`, on a runne
 that does have a container. That job goes through this runner rather than around
 it, so the route a contributor is told to use is the route the gate proves.
 Whether that job becomes a merge condition is `docs/required-checks.md`'s
-question and issue #93's, and it is not decided here.
+question and it is not decided here. That document keeps it out of the required
+set for now and says what would move it in. Nothing is required by the ruleset
+today in either case.
