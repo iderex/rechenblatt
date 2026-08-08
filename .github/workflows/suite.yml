@@ -210,6 +210,30 @@ jobs:
         # Naming no entry is what makes this print rather than run.
         run: bash .github/scripts/needs-an-environment.sh list
 
+  excluded:
+    name: What the default run excludes
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Prove each refusal bites
+        # First, for the same reason the other checkers here are preceded by
+        # their proofs: a checker that has stopped biting reports a set that
+        # agrees with the tree, and a clean report from a dead check is worse
+        # than a red one.
+        run: bash .github/scripts/prove-excluded-from-the-default-run.sh
+
+      - name: Print what the default run excludes, and refuse a test that runs nowhere
+        # One step rather than two. The checker prints every excluded test with
+        # the source it is in and the entry that runs it before it judges, so the
+        # set is visible in a run rather than only in a file somebody opens, and
+        # the print cannot drift from the verdict because it is the same read.
+        run: bash .github/scripts/check-excluded-from-the-default-run.sh .
+
   headless:
     name: Headless and unelevated
     runs-on: ubuntu-latest

@@ -1,0 +1,54 @@
+# Every test the default run does not run, why, and what runs it instead.
+#
+# The default run is `cargo test --locked --workspace`, and a test carrying
+# `#[ignore]` is not in it. That attribute is one line, it is invisible in a
+# green run, and nothing in the tree reads it, so a test can leave the default
+# suite and be run by nothing at all without a single check going red. This file
+# is the other half: the set is written down, and
+# `.github/scripts/check-excluded-from-the-default-run.sh` refuses a difference
+# between what is written here and what the sources carry.
+#
+# The pair with `.github/scripts/needs-an-environment.txt` is the point rather
+# than a convenience. That register says what cannot be proved in the default
+# suite; this one says what was taken out of it. A test named here whose
+# `Runs-in` matches no entry there is a test that runs nowhere, and it is the
+# failure this file exists against.
+#
+# `docs/excluded-from-the-default-run.md` argues the rule and says what the
+# checker cannot judge, which is the larger half.
+#
+# One record per test, separated by a blank line. Four fields, all required:
+#
+#   Test     the test function's name, which is what `cargo test -- --exact`
+#            takes and what a failure reports
+#   In       the source it is written in, from the repository root
+#   Because  why it is not in the default run, in one sentence
+#   Runs-in  the `Id` of the `.github/scripts/needs-an-environment.txt` entry
+#            that does run it
+#
+# A record with no `Test` or no `In` stops the run, because a record naming no
+# test is not a record and judging the file around one would report a clean
+# register that is not one. A record with no `Because` or no `Runs-in` is
+# refused, because those two are the whole reason this file exists: a test
+# nobody can argue for and a test nobody runs are the two ways an exclusion
+# becomes a deletion.
+
+Test: probe_a_display_server_is_reachable
+In: crates/model/tests/environment.rs
+Because: it asserts that a display server IS reachable and the gate reads its failure as the proof that the sealed environment has none, so a suite that must pass cannot hold a test written to fail.
+Runs-in: sealed-probes
+
+Test: probe_the_host_has_fonts_installed
+In: crates/model/tests/environment.rs
+Because: it asserts that the host has a font file installed, which is the thing the sealed environment is built without, so it is inverted in the same way and for the same reason as the probe above.
+Runs-in: sealed-probes
+
+Test: probe_a_network_socket_can_be_opened
+In: crates/model/tests/environment.rs
+Because: it opens a socket to a literal address, which is both an assertion the sealed environment must falsify and the one thing no test in the default suite may do.
+Runs-in: sealed-probes
+
+Test: probe_a_file_can_be_written_outside_the_scratch_directory
+In: crates/model/tests/environment.rs
+Because: it writes outside the path the run made for itself, which the default suite forbids, and it needs a machine whose calling user may write there, which a contributor's account usually may not.
+Runs-in: sealed-probes
