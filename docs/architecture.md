@@ -54,9 +54,14 @@ the command is replaceable without the engine.
 
 ## What each component may not depend on
 
-The rule is short and it runs one way. A component depends on the ones below it
-in the list above and never on the ones above it, so there is no cycle to
-untangle and no component that has to be built twice.
+The rule runs one way, so there is no cycle to untangle and no component that
+has to be built twice. It is not a position in the list above, and the sentence
+that stood here said it was: a component depending on the ones below it and
+never on the ones above it would permit the first of the three refusals below,
+since render sits above macro there and macro may not depend on render. What
+each component may depend on is written out one component at a time in
+`crates/cli/tests/component_edges.rs`, which holds the graph as data a run
+reads.
 
 Three refusals are worth naming on their own, because each one is a thing
 somebody will want to do:
@@ -70,9 +75,15 @@ somebody will want to do:
 - **nothing on the parsing side may depend on host.** That is the input
   boundary and it has its own section below.
 
-A crate cannot use what it does not depend on, so `Cargo.toml` is the
-enforcement for the first two rather than a diagram of one. Adding the edge is
-what a reviewer would see.
+`crates/cli/tests/component_edges.rs` refuses an edge this note does not have
+and names it. What stood here said `Cargo.toml` was the enforcement for the
+first two, and it was not. A crate cannot USE what it does not depend on, which
+is a different sentence: adding the dependency line is one line in one manifest,
+after which the compiler is satisfied and nothing else here has an opinion. What
+was actually behind those two rules was a reviewer noticing the line, which this
+repository calls prose. It was found by trying to name the check when the rules
+were being turned into tests, and finding that the named enforcement refused a
+different thing.
 
 ## The input boundary
 
@@ -125,10 +136,59 @@ argued for.
 
 The mechanics are then: a directory under `crates/`, a manifest declaring
 `publish = false` and inheriting the workspace lints, an entry in `members` in
-the workspace manifest, and an entry in `components()` in
-`crates/cli/src/main.rs`, which the suite requires - a component wired into
-nothing builds, passes its own tests, and no operator-facing thing knows it
-exists.
+the workspace manifest, an entry in `components()` in
+`crates/cli/src/main.rs`, and an entry in the graph in
+`crates/cli/tests/component_edges.rs` saying what the new component may depend
+on. The suite requires the last two. A component wired into nothing builds,
+passes its own tests, and no operator-facing thing knows it exists; a component
+with no entry in the graph is one no check can judge, so it is refused rather
+than allowed every edge it wrote for itself.
+
+## Which of these rules a machine holds
+
+A rule nothing refuses is an explanation of a rule. Each of the above is
+therefore listed once with what holds it, so a reader can tell the two apart
+without going looking.
+
+| Rule | Held by |
+| --- | --- |
+| The edges, one component at a time | `crates/cli/tests/component_edges.rs` |
+| macro may not depend on render | the same |
+| model may not depend on calc | the same |
+| A new component says what it may depend on | the same, which refuses a member with no entry |
+| Nothing on the parsing side depends on host | `crates/cli/tests/boundary.rs` |
+| Every member declares its side | the same |
+| A parsing component links nothing from outside the workspace the workspace has not accepted | the same |
+| A new component is named by the binary | the test beside `components()` in `crates/cli/src/main.rs` |
+| Every path this note names is in the tree | `crates/cli/tests/documentation.rs` |
+| A parsing component holds no route to the network | the `network-outside-host` record in `.github/scripts/invariants.txt`, which reads text rather than dependencies |
+| A parsing component opens no path and reads no clock | nothing |
+| The document is read once, by one component | nothing |
+| A component is named for what it is rather than where it sits | nothing |
+| Something is measurably better for a component existing | nothing |
+
+The four rows saying nothing are two different cases and they are not
+interchangeable.
+
+The last two are judgements. No reading of this tree decides whether a name
+describes a thing or whether a split earned its cost, so no check is owed for
+them and writing one would produce a rule that passes for a component called
+`util` as long as the file is spelled that way. The review is where a wrong
+answer to either is caught.
+
+The other two are gaps with work behind them. A parsing component calling
+`std::fs` or reading a clock passes every check here, because the boundary check
+reads declared dependencies rather than source and the pinned toolchain has no
+lint that refuses a capability call by crate; the network third of that same
+rule is refused only because a text scan happens to be able to see a socket
+type. A second reader of a document is the failure `docs/decisions/0002-track-order.md`
+argues against, and issue #14 is where the model decision that would make it
+checkable is written.
+
+Enforced here means a check in this tree refuses the violation at the commit
+this note was last edited. A row saying nothing does is a statement about that
+commit rather than a promise about the next one, and the landing that closes one
+of these gaps is the landing that edits the row.
 
 ## What holds this document to the tree
 
@@ -140,3 +200,12 @@ Issue #100 is where that grows into the rest of the documentation lint.
 
 What refuses the rest is not listed here, because a list of checks drifts
 against the checks. `docs/checks.md` names the commands that print what exists.
+
+The table above is the one thing in this note that reads like such a list, and
+it is the same exception `docs/checks.md` argues for itself: no command prints
+which rule a check is about, so deleting the table would delete the answer
+rather than move it somewhere derivable. What holds it is narrower than a
+checker and worth saying plainly. Every path in it is refused by
+`crates/cli/tests/documentation.rs` if it stops resolving, so a renamed test
+reddens the suite. Nothing reads the rule column, and nothing compares a row
+against what the named test actually refuses.
