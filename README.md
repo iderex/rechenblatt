@@ -35,9 +35,9 @@ The binary runs and does nothing, which is the honest state of it:
 cargo run --locked --bin rechenblatt
 ```
 
-The engine is four library crates under `crates/`, and the command is a fifth
-that depends on them. `Cargo.toml` at the root says which of them may depend on
-which, and why.
+The engine is five library crates under `crates/`, and the command is a sixth
+that depends on all of them. `Cargo.toml` at the root says which of them may
+depend on which, and why.
 
 `CONTRIBUTING.md` has the guards that read the tracked tree, and what a change
 here is judged by.
