@@ -155,11 +155,34 @@ it.
 
 ## Rules this repository holds that you cannot guess
 
-The default test suite runs headless and unelevated. No display server, no
-elevated rights, no host font directory, no network. A test that needs a real
-environment goes to a separate harness named for what it needs and is not part of
-the default run. This is a condition the first test meets rather than something
-the suite is audited for later, and issue #7 is where it becomes a check.
+The default test suite runs headless and unelevated: no display server, no
+elevated rights, no host font directory and no network, and a test that needs a
+real environment goes to a separate harness named for what it needs and is not
+part of the default run.
+
+That is checked rather than asserted. This runs the suite in a container with none
+of those things present, and then runs four probes that each reach for one of them
+and must all fail:
+
+```
+bash .github/scripts/needs-an-environment.sh sealed-suite
+bash .github/scripts/needs-an-environment.sh sealed-probes
+```
+
+Both need docker and the first fetch of the pinned image needs the network. The
+`Headless and unelevated` check runs exactly these two commands, so a contributor
+without docker sees the same result on the pull request instead.
+
+That runner is the one route to anything here that cannot run in the default
+suite, and it runs nothing without being told which entry to run. To see what is
+behind it and what each entry needs:
+
+```
+bash .github/scripts/needs-an-environment.sh list
+```
+
+`docs/needs-an-environment.md` argues the rule, and it is worth reading before
+adding a test that wants something a plain checkout does not have.
 
 Code that reads bytes this project did not create stays behind a boundary. A
 parser takes bytes and returns a value or a typed error: it opens no path it was

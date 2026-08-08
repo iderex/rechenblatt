@@ -42,8 +42,13 @@ red while that happens, which is the whole problem with it.
 | `Lint` | `cargo clippy --locked --workspace --all-targets` |
 | `Prove the format and lint gates bite` | `bash .github/scripts/prove-format-and-lint.sh` |
 | `Build and suite` | `cargo build --locked --workspace --all-targets`, then `cargo test --locked --workspace`, then the coverage floor |
+| `Headless and unelevated` | `bash .github/scripts/needs-an-environment.sh sealed-suite`, then `bash .github/scripts/needs-an-environment.sh sealed-probes`; both need docker, and the first fetch of the pinned image needs the network |
+| `Declare what needs an environment` | `bash .github/scripts/prove-needs-an-environment.sh`, then `bash .github/scripts/check-needs-an-environment.sh .`, then `bash .github/scripts/needs-an-environment.sh list`; `docs/needs-an-environment.md` argues what it covers |
+| `What the default run excludes` | `bash .github/scripts/prove-excluded-from-the-default-run.sh`, then `bash .github/scripts/check-excluded-from-the-default-run.sh .`; `docs/excluded-from-the-default-run.md` argues what it covers |
 | `Names match the document` | `bash .github/scripts/prove-check-names.sh`, then `bash .github/scripts/check-check-names.sh .` |
+| `Code scanning` | `bash .github/scripts/prove-code-scanning.sh`, then `bash .github/scripts/check-code-scanning.sh .`; `docs/code-scanning.md` argues what it covers |
 | `Refuse ambiguous tracked bytes` | `bash .github/scripts/prove-tracked-bytes.sh`, then `bash .github/scripts/check-tracked-bytes.sh .` |
+| `Enforce greppable invariants` | `bash .github/scripts/prove-invariants.sh`, then `bash .github/scripts/check-invariants.sh .`; `docs/invariants.md` argues what it covers |
 | `Reject Trojan Source Unicode` | the `git grep` expression in `CONTRIBUTING.md` |
 | `DCO sign-off` | the sign-off loop in `CONTRIBUTING.md` |
 | `Audit workflows (zizmor)` | no local form without a Python package runner and network access |
@@ -51,9 +56,18 @@ red while that happens, which is the whole problem with it.
 | `Scorecard analysis` | no local form; it does not run on a pull request at all |
 
 `docs/format-and-lint.md`, `docs/test-harness.md` and `docs/tracked-bytes.md` are
-where the first four are argued. The two with no local form are disclosed in
+where the first five are argued. The two with no local form are disclosed in
 `CONTRIBUTING.md` as well, so a contributor meets that fact before a red check
 tells them.
+
+`Headless and unelevated` is the one row whose command needs something a
+contributor may not have. It reaches the sealed run through
+`docs/needs-an-environment.md`'s runner rather than around it, so the route a
+contributor is told to use is the route the gate proves, and the run carries the
+environment it happened in. The two rows beside it read files and need nothing at
+all, which is why they are separate checks rather than one: one reads that
+runner's register, and the other reads the set of tests the default run does not
+run and refuses one that reaches neither the run nor the runner.
 
 ## Why a table here is not the drift it looks like
 
@@ -101,8 +115,9 @@ table is the list that issue will choose from.
 - Every checkout runs with `persist-credentials: false`, so no step leaves the
   token in `.git/config` for a later step to find.
 - Permissions are declared read-only at the workflow level and widened only on
-  the job that needs more. Two jobs need `security-events: write` to upload
-  findings, and they declare it themselves.
+  the job that needs more. The jobs that upload findings need
+  `security-events: write`, and each declares it for itself rather than the
+  workflow granting it to everything beside it.
 - No path filter skips a job. A skipped job reports nothing rather than
   reporting success, and a rule requiring that check reads nothing as never
   satisfied, so the change waits on a gate that decided it had nothing to do.

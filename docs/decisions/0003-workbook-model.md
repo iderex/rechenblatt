@@ -1,214 +1,215 @@
 # 0003 The workbook model
 
-One model, read once, owned by `crates/model`. Every other component reads the
-model rather than the document, and the suite refuses a component that names a
-part of a document outside it.
+One component reads a document, once, into one model, and everything else in
+this repository reads that model rather than the file.
 
 Status: accepted
-Date: 2026-08-07
+Date: 2026-08-08
 Issue: #14
 
 ## Context
 
-Two tracks in this repository want to look at a workbook, and they want
-different things. The renderer wants nearly everything a document says about
-appearance: styles, themes, number formats, drawings, page setup. The macro
-runtime, when it comes, wants a narrow set of things it can also change.
+Two tracks in this repository want to look at a workbook and they want different
+things from it. The renderer wants nearly everything a document says about
+appearance: geometry, styles, themes, number formats, drawings, page setup. The
+macro track, when it arrives, wants a narrower set of things it can also change,
+and it wants them to behave like objects rather than like parts of a file.
 
-The cheap answer is to give each one what it needs. It produces two readers of
-one file, and two readers of one file disagree. They disagree on the documents
-neither was written against, which is most of them, and the disagreement arrives
-as a rendering that is wrong in a way nobody can locate, because the question
-"what does this document say" now has two answers and no way to choose.
+The cheap answer is to give each one what it needs, which produces two readers
+of one document. Two readers disagree eventually, and they disagree quietly:
+each is correct about the document as it read it, and the difference only
+surfaces as a rendering that does not match what a macro just changed. That is
+the failure this project exists to complain about in other software, and
+`docs/decisions/0002-track-order.md` is where the argument that the two tracks
+share a reader was first made.
 
-That is the failure this project exists to complain about in other software, so
-it is settled here, before either reader exists.
+The line is worth drawing while the components are empty. A model retrofitted
+onto two readers is a rewrite of both.
 
 ## The decision, in full
 
-There is one model. `crates/model` owns it, and it is the only component that
-turns a document into one. Every other component reads the model.
+`crates/model` owns the document. It is the only component that opens a package,
+walks a part, or knows what a part is called. Every other component asks it.
 
-`crates/calc`, `crates/render` and `crates/macro` are readers. So is
-`crates/cli`, which hands the model to them. A question about a document is
-answered from the model and never by opening the file a second time. The
-workspace edges in `Cargo.toml` are the first half of that: the model depends on
-nothing else here, so nothing it produces can be shaped by a consumer.
+**Who reads it.** `crates/calc`, `crates/render`, `crates/macro` and
+`crates/cli` all read the model, and none of them reads a document.
+`docs/architecture.md` holds the edges between them and
+`crates/cli/tests/component_edges.rs` refuses one the note does not have; that
+graph and this record are about different things, and both are needed. An edge
+says which component may call which. This record says what may be behind the
+call: the model, and never the file.
 
-The model is written in two places and nowhere else. Its own reading writes it,
-which is what building the model means. The macro track writes it through the
-model's own interface, because a macro that changes a workbook is the whole
-point of that track; issue #72 is where those surfaces are bound, one measured
-surface at a time. A consumer that computes something from the model holds the
-result beside the model rather than inside it: a calculated value is
-issue #44's subject and not a field the renderer may write back.
+**Who writes it.** The model writes itself while it reads. After that,
+`crates/macro` is the only component that changes a model, because changing a
+workbook is what the macro track is for, and it does so through an interface the
+model owns rather than by reaching into its fields. The renderer and the
+evaluator do not write: a renderer that can change what it draws from is a
+renderer whose output is not a function of the document, and the evaluator's
+results are values it returns rather than edits it makes. Issue #47 is where the
+evaluator's own storage is decided, and issue #72 is where the macro track's
+write surface is measured and bound.
 
-### What the model holds beyond what the renderer needs today
+**The model is the authority.** Any question about a document is answered from
+the model. A consumer that finds the model cannot answer its question widens the
+model; it does not go around it. That is a rule about where work goes rather
+than a restriction on what can be built, and it is what keeps one answer per
+question.
 
-Everything the document says, not everything the current consumer draws.
+### What the model holds that nothing draws yet
 
-A model that holds what is currently drawn is a rendering cache with a
-misleading name. It passes every test on the day it is written, because the
-tests are written from the same list, and it fails the first time a second
-consumer asks for a part nobody drew. That consumer then has one honest option
-and one cheap one, and the cheap one is to open the file itself.
+The model holds what the document says, not what the renderer currently reads.
+It carries parts no consumer uses today: the parts the macro object model will
+want, the parts a later output format will need, and the parts whose only
+current use is to be reported as unrepresented.
 
-So the model holds parts the renderer ignores. It holds the ones the macro
-object model will want, the ones a later milestone will draw, and the ones
-nothing has a use for yet, because "nothing uses it" is a fact about today and
-"the document does not say it" is a fact about the document. Where the model
-genuinely cannot represent something, that is recorded rather than dropped, and
-issue #18 is where the record and the rule that nothing is dropped in silence
-are built.
+A model that holds only what is drawn is a rendering cache with a misleading
+name, and it fails in a specific way. The next consumer needs something that was
+never kept, so it reads the file, and the second reader is born for a reason
+that looks entirely sensible in its own commit.
 
-### Eager and lazy
+There is a second reason and it is the one that matters for the numbers this
+project publishes. Fidelity is measured against what a document contains, so a
+model that quietly drops a part reports a good score on a document it emptied.
+Issue #18 is where what the model cannot represent becomes a list that travels
+with the model, and this record is what makes that list possible: a thing has to
+reach the model before the model can say it could not hold it.
 
-Reading everything is slower and larger than reading what is needed, and on a
-workbook of the size a public body actually holds that is not a rounding error.
-The answer is not to read less. It is to read later, and where the line falls is
-part of this decision rather than an optimisation somebody adds afterwards.
+### The eager and lazy split
 
-Read eagerly: the package structure and the relationships between its parts, the
-workbook part itself, the sheets that exist and their order and visibility, the
-styles, the theme, the number formats, the defined names, and the record of what
-could not be represented. Everything a question about the document *as a whole*
-is answered from.
+Reading everything eagerly is slower and larger than reading what is needed, and
+on a large workbook that is the difference between a service and a demonstration.
+The answer is not to read less. It is to read later, and where the boundary sits
+is part of this decision rather than an optimisation somebody adds afterwards.
 
-Read on demand: everything whose size follows the data rather than the
-structure. The cells of a sheet nobody has asked about, the strings they share,
-the drawings and charts anchored in it, embedded images, and the macro project's
-bytes.
+The rule, so that a new part does not need a meeting:
 
-The rule for a part nobody has classified yet, in one sentence: it is eager if
-its size is bounded by the shape of the document rather than by how much data
-somebody put in it, or if a question about the document as a whole cannot be
-answered without it. Otherwise it is lazy.
+- **A part whose cost is bounded by the document's structure is eager.** The
+  workbook part, the sheet index, the relationship graph, the styles, the theme,
+  the number formats, the defined names. There is one of each per workbook, they
+  are small, and everything else is interpreted through them.
+- **A part whose cost is bounded by the document's content is lazy.** Cell data
+  per sheet, embedded images and other media, chart parts, the macro project.
+  These scale with what somebody put in the document, and a workbook with two
+  thousand sheets is a workbook where reading the second thousand eagerly is
+  work nobody asked for.
+- **A part that has to be read to answer a question about another part is
+  eager**, whatever its size. Laziness that has to be resolved before the model
+  can be described is not laziness.
 
-Lazy never means absent, and this is the half that is easy to get wrong. The
-model records that an unread part is there, so a consumer can tell "not read
-yet" from "not in this document". Those are different answers and a model that
-returns the same thing for both has quietly become the silent-drop failure that
-issue #18 is about, one indirection further down.
+Two properties hold whichever side a part falls on.
 
-## Reasons, in the order they carry weight
+Laziness is invisible from outside. A lazy part is behind an accessor that
+returns the same value however many times it is asked, so no consumer can tell
+which side of the split a part was on, and moving a part from one side to the
+other changes no caller. A lazy read can fail, and the accessor says so in its
+return type rather than at the moment of construction.
 
-A second reader is not added on purpose, so a rule about it has to be a refusal
-rather than a paragraph. Nobody decides to write a second parser. Somebody needs
-one part the model does not hold yet, opens the package for that one part
-because it is four lines, and the second authority on what documents say now
-exists and has a test suite.
-
-The renderer is the broad consumer and the macro track is the deep one, and
-`docs/decisions/0002-track-order.md` sequences the broad one first for exactly
-this reason. A model shaped by the broad pass has somewhere to put what the deep
-pass later needs. Two models shaped by their own consumers have nowhere to put
-anything.
-
-A fidelity number is only worth reading if one thing produced it. If the
-renderer and the comparison harness reach the document by different routes, a
-difference between them is a difference between two readers, and the number
-stops being about rendering at all.
-
-The input boundary is easier to hold with one crossing.
-`docs/decisions/0014-input-boundary.md` puts every parsing component on one side
-of a line; a single component that reads documents means the surface a hostile
-file reaches is one component's public functions rather than a set that grows
-each time a consumer gets impatient. Issue #96 attaches the fuzzing to that
-surface, and it can only attach to a surface somebody can name.
+Laziness is over bytes, not over a file. `docs/decisions/0014-input-boundary.md`
+puts the model on the parsing side, which opens no path it was not handed, so a
+model that reads a part later reads it out of what it was already given. A
+document larger than the memory that holds it therefore needs something this
+record does not provide, and issue #23 is where that is decided rather than
+assumed.
 
 ## What the check does, and where it stops
 
-`crates/cli/tests/model_ownership.rs` reads the workspace and refuses four
-things: no member declaring that it reads documents, more than one declaring it,
-an empty marker list, and a part of a document named in the source of a
-component that reads the model.
+`crates/cli/tests/document_parts.rs` refuses a component other than the model
+that names a part of a document in its source, and refuses a workspace where no
+member answers to the reader's name.
 
-The declaration is one line in a member's own manifest:
+Nine legs stand behind it, beside the one test that judges this tree. Each plants
+exactly one thing in a scratch workspace and requires that refusal and no other;
+each has a neighbour that changes the one thing back and requires nothing to be
+refused.
 
-```toml
-[package.metadata.rechenblatt]
-reads-documents = true
-```
-
-What counts as naming a part of a document is data rather than code. The
-workspace manifest carries `document-part-markers`, the text that appears in
-code taking a document apart and nowhere else, and the check reads that list.
-The list lives there so that whoever accepts a second input format adds its part
-names in the commit that needs them, and so that the check's own source is not
-something the scan has to be taught to skip.
-
-Ten legs stand behind it. Each plants exactly one mistake in a scratch workspace
-and requires that refusal and no other; each has a neighbour that changes the
-one thing back and requires nothing at all. Two further tests read this tree
-rather than a scratch one: one requires the workspace to hold up, and one
-requires the component declaring the reading to be the model this record names.
+The near-miss it is aimed at is one line rather than a rewrite. The renderer
+wants a theme colour the model does not carry yet, and somebody writes the name
+of the theme part into `crates/render`. Nothing else about that change looks
+wrong. It compiles. It adds no dependency, so the edges are unmoved. It adds no
+capability, so the input boundary is unmoved. The two dependency checks in this
+tree both pass a second reader that is written inside a component that was
+already allowed to exist.
 
 Where it stops, stated rather than left to be discovered.
 
-It scans each member's `src` directory and nothing else, so a document part
-named in a component's own tests passes. That is the line
-`crates/cli/tests/boundary.rs` already draws at `[dev-dependencies]`, and for the
-same reason: a test is not the component.
+It judges string literals, not behaviour. A part name assembled from pieces at
+runtime passes it, and so does one read out of a configuration file. That is the
+bound of any text scan, and it is why this check sits beside the two dependency
+checks rather than replacing either.
 
-It judges text, so a marker inside a comment or a string literal is refused
-exactly as a parser would be. That is the intended reading rather than a
-tolerated one. A component with reason to write a document part name down is a
-component thinking about the file, and the repair is to reword the sentence.
+It reads the double-quoted spans of a line, so a component may name a part in a
+comment. Saying in prose which part the model read is how a component explains
+itself; naming it in code is how a component reaches for it.
 
-It judges names and not behaviour. A component that reads a document part
-without naming one, because something handed it the bytes, passes. Nothing in
-the tree refuses that, and issue #101 is where the rest of the architecture
-becomes tests.
+It does not read a member's own tests, on the line
+`crates/cli/tests/boundary.rs` draws for dependencies and for the same reason: a
+test is not the component.
 
-A member whose declaration this check cannot read is treated as not declaring
-it, which makes it scanned rather than exempt. A typo therefore tightens the
-check; on the model it removes the only reader and the run says so.
+Its marker list is the part names of one package shape and it is not the format
+decision. Which formats the first release accepts is issue #15, and the first
+entry of that answer that is not a container of named parts - a compound file
+holding streams, for instance - is covered by nothing here until somebody adds
+its names.
+
+And it says nothing about the split above. Nothing in this tree refuses a part
+read eagerly that this record says is lazy; that is a judgement about cost, the
+suite is where it would show up as a number, and no check is written for it
+today.
 
 ## What this costs
 
-The model is bigger than any one consumer needs, and it is bigger first. Parts
-land in it before anything draws them, which means work whose payoff is a
-milestone away and a reviewer asking why.
+**The model is on the critical path for everything.** A renderer that needs a
+property the model does not carry cannot proceed until the model carries it, so
+one component becomes the place where two tracks queue. That is the cost of one
+answer per question, and it is paid deliberately.
 
-A consumer that wants something in a shape the model does not hold has to change
-the model, which is a wider change than reaching for the file. That is the cost
-of the rule working, and it is paid every time by the person least inclined to
-pay it.
+**A widening that serves one consumer lands in a component shared by all of
+them.** The repair for a missing property is an edit to the model, which is the
+component with the most readers and the most tests. That is more expensive than
+a local read, and it is the expense that keeps the two readings identical.
 
-The lazy side is a source of bugs the eager side does not have. A part read on
-demand is read at a moment nobody chose, and a consumer that holds a reference
-across such a read is a shape this repository has not met yet. Issue #23 is
-where reading a workbook larger than memory meets it first.
+**Some parts are read for nobody.** A part that no consumer uses is still read,
+still held and still tested. The alternative is not reading it, and the section
+above is what that costs instead.
+
+**A lazy part is a second place a read can fail.** An accessor that can fail is
+harder to use than a field, and the failure arrives later than the open did,
+which is a worse moment to report it. It is bought for the large-workbook case
+and it is not free.
 
 ## What would reverse this
 
-A part that the model cannot hold without becoming a union of two designs, where
-holding it for one consumer makes it wrong for the other. Reversing this means
-naming that part, saying which two consumers want incompatible shapes of it, and
-saying why a derived representation held beside the model does not work.
+A consumer whose needs are genuinely disjoint from the document. If the macro
+object model turns out to want a view that no reading of the file produces, and
+building it from the model costs more than reading the file twice, then the
+premise here is wrong and the record is replaced rather than amended.
 
-A consumer keeping a derived representation of its own is not a reversal. It is
-what the renderer is expected to do with geometry, and the test is where it got
-the input: from the model rather than from the file.
+The other reversing condition is measured rather than argued: if the eager half
+cannot be made small enough for the documents in the corpus, so that opening a
+workbook to answer one question reads the whole of it, the split moves or the
+model gains a mode. Issue #23 is where that measurement lands.
 
-Issue #23 is the case to watch. A workbook larger than memory may need a reader
-that pulls, and a reader that pulls is one the current shape does not describe.
-That is a measurement rather than an opinion, and it belongs in that issue.
+Reversing this means naming the consumer or the measurement and saying why one
+model did not work. It does not mean restating this record with the sign
+changed.
 
-## Rejected alternative
+## Rejected alternatives
 
-**A reader per consumer.** Each track reads what it needs, in the shape it wants
-it, with no coordination. It is faster to start and it is the arrangement this
-project was planned as an alternative to. Two readers produce two answers about
-one file, and the first symptom is a fidelity difference that is really a
-disagreement between two pieces of this repository. The counting is worse than
-the bug: every measurement the fidelity milestone produces would be a
-measurement of whichever reader the harness happened to use.
+**A reader per consumer.** Each track parses what it needs, directly, and the
+model is not a component at all. It is faster to write, faster to run, and every
+question about a document then has as many answers as there are readers. The
+project's whole claim is that the model says what the document says, which is a
+claim only one reader can make. It was rejected for that, and the cost of the
+rejection is written above rather than left implicit.
 
-**One reader per format, sharing a model.** This is the version worth taking
-seriously, and it is not rejected so much as deferred. A second input format
-would need its own reading code, and putting it in the same component as the
-first is not obviously right. What this record fixes is that there is one model
-and one component that owns turning documents into it; how that component is
-organised inside is not decided here, and issue #15 is where a second format
-would first make it a real question.
+**One reader with a per-consumer view built at read time.** A middle position:
+one parser, two shapes handed out, each tailored. It keeps one reading of the
+bytes and loses the single answer, because a view is a decision about what to
+drop and the two views drop different things. The same disagreement returns one
+layer up, where it is harder to see.
+
+**A model that holds only what the renderer draws today.** Smaller, faster and
+testable against the thing being built. It makes every later consumer a reason
+to read the file again, and it makes the unrepresented-content list of issue #18
+impossible to populate, because a part that was never read cannot be reported as
+one the model could not hold.

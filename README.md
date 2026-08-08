@@ -42,5 +42,7 @@ which, and why.
 `CONTRIBUTING.md` has the guards that read the tracked tree, and what a change
 here is judged by.
 
-See [NOTICE.md](NOTICE.md) for the intended-use notice and
+See [NOTICE.md](NOTICE.md) for the intended-use notice,
+[docs/intended-use.md](docs/intended-use.md) for what the maintainers consider
+outside this project and what the software does not prevent, and
 [SECURITY.md](SECURITY.md) for the private reporting route.

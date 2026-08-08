@@ -1,0 +1,53 @@
+# The invariants a reading of the tracked text can refuse.
+#
+# This file is the list. `.github/scripts/check-invariants.sh` is the code that
+# applies it and holds no invariant of its own, so adding one is adding a record
+# here and nothing else. `docs/invariants.md` argues why the list is data, says
+# what this instrument cannot judge, and carries the two invariants that were
+# named for this gate and are refused somewhere else or not at all.
+#
+# One record per invariant, separated by a blank line. Four fields are required
+# and a record missing any of them stops the run rather than being skipped:
+#
+#   Id         the name a refusal prints, so a failure is actionable without
+#              reading the checker
+#   Files      space-separated shell globs, matched against the tracked path.
+#              An invariant says what it reads; nothing is scanned by default
+#   Prevents   the failure this refuses, in one sentence
+#   Pattern    an extended regular expression, handed to `grep -nE` unchanged
+#
+# And one optional field, which may appear more than once in a record:
+#
+#   Except     a tracked path prefix, then a space, then the reason it is
+#              excepted. A prefix matching nothing tracked is refused, so an
+#              exception cannot outlive the file it was written for, and an
+#              exception with no reason is refused as well.
+#
+# Every record here has a leg in `.github/scripts/prove-invariants.sh` that
+# plants exactly its violation and requires this checker to refuse that id and no
+# other, and a neighbouring leg that changes the one thing back and requires no
+# refusal at all.
+
+Id: host-font-path
+Files: *.rs *.toml *.sh *.yml *.yaml
+Prevents: A rendering that depends on what happens to be installed on the machine that produced it, which makes every fidelity number a number about that machine.
+Pattern: /usr/share/fonts|/usr/local/share/fonts|/etc/fonts|/System/Library/Fonts|/Library/Fonts|[Ww]indows\\+[Ff]onts|fontconfig|fc-list|fc-match|SystemSource|load_system_fonts
+Except: .github/scripts/prove-invariants.sh the file that plants this violation in a scratch tree and requires the refusal, which cannot do so without naming the directory
+
+Id: network-outside-host
+Files: *.rs
+Prevents: A component on the parsing side of the input boundary reaching the network, which turns a malformed document into somebody else's problem instead of a parse error.
+Pattern: std::net|TcpStream|TcpListener|UdpSocket|to_socket_addrs|reqwest|ureq|isahc|curl::|hyper::client
+Except: crates/host/ the component the input boundary declares as the one that may hold the filesystem, the network and the clock
+Except: crates/model/tests/environment.rs the probe that shows a sealed environment has no route to a socket cannot show it without opening one, and it is ignored by name so the default suite never runs it
+
+Id: secret-in-a-plain-string
+Files: *.rs
+Prevents: A credential in a type whose Debug and Display print it, which is how a secret reaches a log, a panic message or a bug report without anybody deciding that it should.
+Pattern: (password|passphrase|secret|credential|api_key|apikey|private_key|[a-z_]+_token)[a-z_]*[[:space:]]*:[[:space:]]*(String|&str|Option<String>|Option<&str>)
+
+Id: absolute-path-in-a-test
+Files: */tests/*.rs tests/*.rs
+Prevents: A test that passes on the machine it was written on and fails everywhere else, and one that writes outside the directory it created.
+Pattern: "/[A-Za-z]|"[A-Za-z]:\\
+Except: crates/model/tests/environment.rs the host font directories and the path outside the workspace are the subjects of the scan and the probes in that file, so refusing the strings would remove the thing being shown rather than a dependency on the machine
