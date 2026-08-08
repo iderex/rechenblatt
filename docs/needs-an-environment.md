@@ -125,10 +125,17 @@ that somebody wrote the sentence down where a reviewer meets it. The review is
 where a wrong one is caught, and this paragraph is here so that a green check is
 not read as more than it is.
 
-The same holds one step out. Nothing compares the register against the set of
-things that ought to be in it, so an impure test that never got a record is
-invisible to every route here. Issue #102 is where the default suite's own
-exclusion set is decided, and it is the half that would catch that.
+The same holds one step out, and this half has narrowed rather than closed.
+`.github/scripts/excluded-from-the-default-run.txt` now names every test the
+default run does not run and the entry here that runs it, and its checker refuses
+a test that reaches neither, so a test taken out of the default suite and given to
+nothing is no longer invisible.
+`docs/excluded-from-the-default-run.md` argues that half and says where it stops.
+
+What is still not compared is the other direction: nothing reads a test that
+NEEDS an environment and was never taken out of the default suite. Such a test
+runs there and fails on its own assertion, and no reading of a source says in
+advance that it wanted a display.
 
 ## It is not a merge condition
 

@@ -44,6 +44,7 @@ red while that happens, which is the whole problem with it.
 | `Build and suite` | `cargo build --locked --workspace --all-targets`, then `cargo test --locked --workspace`, then the coverage floor |
 | `Headless and unelevated` | `bash .github/scripts/needs-an-environment.sh sealed-suite`, then `bash .github/scripts/needs-an-environment.sh sealed-probes`; both need docker, and the first fetch of the pinned image needs the network |
 | `Declare what needs an environment` | `bash .github/scripts/prove-needs-an-environment.sh`, then `bash .github/scripts/check-needs-an-environment.sh .`, then `bash .github/scripts/needs-an-environment.sh list`; `docs/needs-an-environment.md` argues what it covers |
+| `What the default run excludes` | `bash .github/scripts/prove-excluded-from-the-default-run.sh`, then `bash .github/scripts/check-excluded-from-the-default-run.sh .`; `docs/excluded-from-the-default-run.md` argues what it covers |
 | `Names match the document` | `bash .github/scripts/prove-check-names.sh`, then `bash .github/scripts/check-check-names.sh .` |
 | `Refuse ambiguous tracked bytes` | `bash .github/scripts/prove-tracked-bytes.sh`, then `bash .github/scripts/check-tracked-bytes.sh .` |
 | `Enforce greppable invariants` | `bash .github/scripts/prove-invariants.sh`, then `bash .github/scripts/check-invariants.sh .`; `docs/invariants.md` argues what it covers |
@@ -62,8 +63,10 @@ tells them.
 contributor may not have. It reaches the sealed run through
 `docs/needs-an-environment.md`'s runner rather than around it, so the route a
 contributor is told to use is the route the gate proves, and the run carries the
-environment it happened in. The row beside it reads that runner's register and
-needs nothing at all, which is why the two are separate checks rather than one.
+environment it happened in. The two rows beside it read files and need nothing at
+all, which is why they are separate checks rather than one: one reads that
+runner's register, and the other reads the set of tests the default run does not
+run and refuses one that reaches neither the run nor the runner.
 
 ## Why a table here is not the drift it looks like
 

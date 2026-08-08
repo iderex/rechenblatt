@@ -117,7 +117,12 @@ write under `/usr/local`, which a contributor's usually may not. The gate reads
 the failure and the cause on it, not a pass somewhere else.
 
 The probes are `#[ignore]`d, so the default suite never runs them. Only the gate
-does.
+does, and each of the four carries a record in
+`.github/scripts/excluded-from-the-default-run.txt` saying why it is out of the
+default run and which entry of the harness runs it.
+`docs/excluded-from-the-default-run.md` argues that register: the attribute is one
+line with no symptom, so the set it produces is written down and a checker refuses
+a difference between the two sides.
 
 **How both halves are reached.** Neither is invoked directly any more. Both are
 entries in the register `docs/needs-an-environment.md` describes, and the gate
