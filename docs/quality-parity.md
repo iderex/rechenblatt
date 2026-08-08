@@ -192,6 +192,39 @@ beside it would give one rule two places to be repaired and two places to
 disagree, so the greppable list does not carry it. `docs/invariants.md` says the
 same thing where somebody reading that gate will meet it.
 
+## The code scanning threshold
+
+Code scanning threshold: medium
+
+That line is read by `.github/scripts/check-code-scanning.sh` rather than the
+severity being written into the workflow, so the threshold and the reasoning for
+it cannot drift apart. A run that cannot read the line fails rather than
+assuming one, and `.github/scripts/prove-code-scanning.sh` has a leg that takes
+the line away and requires the check to stop.
+
+Why this rung and not another. The scan reads the shipped code with a set of
+lints that are off by default and are all about one question: what a value that
+came out of somebody else's document can do to the process that read it.
+`.github/scripts/code-scanning-lints.txt` places each of them, and the three
+rungs mean three different things here. `high` is an abort: the process ends
+because a document did not carry what the code expected, which turns a malformed
+file into an outage for everything else on the host. `medium` is a value going
+wrong quietly, where a size wraps or a component takes a decision that belonged
+to the operator surface. `low` is a conversion or a slice that is usually
+correct and is worth seeing.
+
+A threshold at `high` would leave the wrapping arithmetic advisory, which is the
+class that defeats a ceiling rather than announcing itself. A threshold at `low`
+would gate on constructs the shipped code will legitimately hold once it does
+arithmetic on geometry, and a gate that has to be argued around is one that gets
+argued around. `medium` refuses both kinds of abort and the quiet wrong value,
+and reports the rest without failing anything, which keeps the low rung a
+finding list rather than a verdict.
+
+The rung is a property of this project rather than of the analyser: nothing in
+clippy calls any lint `high`, and every placement in that register is this
+repository's judgement with its reason written beside it.
+
 ## Which of these are merge conditions
 
 None of them, today. Read rather than assumed:

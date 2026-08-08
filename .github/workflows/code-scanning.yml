@@ -1,0 +1,90 @@
+# Code scanning for this project's language. The counterpart to the target
+# gate's `CodeQL` and `Analyze (csharp)` rows, which `docs/quality-parity.md`
+# maps onto issue #94.
+#
+# The analyser is clippy, pinned in `rust-toolchain.toml` beside the compiler, so
+# this gate installs nothing and has no version that can move without a commit.
+# It is not the `Lint` job run twice: every lint it reads with is off by default
+# and therefore outside that job's set, and the question is a different one -
+# what a value that came out of somebody else's document can do to the process
+# that read it. `docs/code-scanning.md` argues the choice against the
+# alternatives and says where the instrument stops.
+#
+# The lints are a tracked register and the threshold is a line in the parity
+# document. Neither is in this file, so a workflow edit cannot quietly change
+# what is scanned or how strict the gate is, and the proof below has a leg for
+# each of those two lines that takes it away and requires the verdict to move.
+#
+# The scan runs twice and that is deliberate. The first run records the findings
+# for the code scanning tab and does not decide anything, because a run that
+# refused something still has findings worth uploading and a step that stopped
+# the job would upload nothing in exactly the case the tab is for. The last step
+# is the verdict and it is fail-closed.
+name: code scanning
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+# Read-only at the workflow level. The one job below widens it for itself.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scan:
+    name: Code scanning
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read # checkout the sources to scan
+      security-events: write # upload the SARIF into the code-scanning tab
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # No step pushes, so do not persist the GITHUB_TOKEN in .git/config.
+          persist-credentials: false
+
+      - name: Show the analyser this commit pins
+        # rustup reads rust-toolchain.toml, which names clippy as a component, so
+        # this step installs it and puts its version in the log where a reader of
+        # a failed run can see which analyser produced the finding.
+        run: |
+          set -euo pipefail
+          cat rust-toolchain.toml
+          cargo clippy --version
+
+      - name: Prove each refusal bites
+        # First, for the same reason the other guards here are preceded by their
+        # proofs: a checker that has stopped biting reports a clean tree, and a
+        # clean report from a dead check is worse than a red one. Fourteen legs,
+        # including the two that take the tracked register and the tracked
+        # threshold away and require the verdict to follow.
+        run: bash .github/scripts/prove-code-scanning.sh
+
+      - name: Scan and record the findings
+        # The verdict belongs to the last step. This one exists so the findings
+        # reach the tab whichever way that verdict goes.
+        run: bash .github/scripts/check-code-scanning.sh . --sarif results.sarif || true
+
+      - name: Upload SARIF
+        # Only where the GITHUB_TOKEN can write security events: pushes to the
+        # default branch and same-repository pull requests. A fork's token is
+        # read-only, so the upload is skipped there and the gate below still
+        # runs. continue-on-error keeps the gate independent of the upload: a
+        # transient failure here must not skip the refusal.
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
+        with:
+          sarif_file: results.sarif
+          category: code-scanning
+
+      - name: Refuse a finding at or above the declared threshold
+        run: bash .github/scripts/check-code-scanning.sh .
