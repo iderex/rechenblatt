@@ -88,11 +88,11 @@ parsing component depending on a host component, and a parsing component
 depending on an outside crate the workspace has not accepted. The refusal names
 the edge, so a failing run locates the cause without a second run.
 
-Twelve legs stand behind it. Each plants exactly one mistake in a scratch
-workspace and requires that refusal and no other; each has a neighbour that
-changes the one thing back and requires nothing to be refused. A check that
-refuses everything fails the neighbours, and one that refuses nothing fails the
-first kind.
+Ten legs stand behind it, beside the two tests that judge this tree. Four of them
+plant exactly one of the mistakes above in a scratch workspace and require that
+refusal and no other; the other six change the one thing back and require nothing
+to be refused. A check that refuses everything fails the six, and one that
+refuses nothing fails the four.
 
 Where it stops, stated rather than left to be discovered.
 
