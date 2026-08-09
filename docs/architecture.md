@@ -107,6 +107,22 @@ rather than restated here, including the part it cannot see: it reads declared
 dependencies, not source, so a parsing component calling `std::fs` directly
 passes it.
 
+## The floor the rendering pipeline stands on
+
+The input boundary asks what a crate can reach. There is a second question about
+the same crate, and a library can pass the first while failing the second: what
+does it decide? `docs/decisions/0006-rendering.md` is where that is argued, and
+the rule it states is that the pipeline holds no document semantics in a
+dependency. A shaping library may place a glyph; it may not decide which font a
+cell asked for.
+
+Answering it is a person reading a crate and writing down what it may decide.
+`crates/cli/tests/rendering_floor.rs` refuses the commit that skips that reading:
+a crate in the pipeline's manifest that the record has never been asked about.
+Where it stops is in the file's own header rather than restated here, and the
+first line of it is that it reads the record as text, so it can tell a name that
+is absent from one that is there and not what a name there was written for.
+
 ## Adding a component
 
 A new component is a claim that something is separable, and the cost of being
@@ -162,12 +178,13 @@ without going looking.
 | A new component is named by the binary | the test beside `components()` in `crates/cli/src/main.rs` |
 | Every path this note names is in the tree | `crates/cli/tests/documentation.rs` |
 | A parsing component holds no route to the network | the `network-outside-host` record in `.github/scripts/invariants.txt`, which reads text rather than dependencies |
+| The document is read once, by one component | `crates/cli/tests/document_parts.rs` |
+| The pipeline holds no document semantics in a dependency | `crates/cli/tests/rendering_floor.rs`, which reads the record as text rather than the crate |
 | A parsing component opens no path and reads no clock | nothing |
-| The document is read once, by one component | nothing |
 | A component is named for what it is rather than where it sits | nothing |
 | Something is measurably better for a component existing | nothing |
 
-The four rows saying nothing are two different cases and they are not
+The three rows saying nothing are two different cases and they are not
 interchangeable.
 
 The last two are judgements. No reading of this tree decides whether a name
@@ -176,14 +193,19 @@ them and writing one would produce a rule that passes for a component called
 `util` as long as the file is spelled that way. The review is where a wrong
 answer to either is caught.
 
-The other two are gaps with work behind them. A parsing component calling
+The remaining one is a gap with work behind it. A parsing component calling
 `std::fs` or reading a clock passes every check here, because the boundary check
 reads declared dependencies rather than source and the pinned toolchain has no
 lint that refuses a capability call by crate; the network third of that same
 rule is refused only because a text scan happens to be able to see a socket
-type. A second reader of a document is the failure `docs/decisions/0002-track-order.md`
-argues against, and issue #14 is where the model decision that would make it
-checkable is written.
+type.
+
+Two of the rows above were that gap until recently and are worth naming as
+having moved, because a reader who learned this table a week ago would still
+believe them. A second reader of a document is now refused by name, and
+`docs/decisions/0003-workbook-model.md` is where the rule and the check's bound
+are argued. A dependency deciding what a document means is refused as far as a
+reading of the record can reach, which is the section above.
 
 Enforced here means a check in this tree refuses the violation at the commit
 this note was last edited. A row saying nothing does is a statement about that
