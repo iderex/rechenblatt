@@ -44,6 +44,27 @@ members = [
 # needs it. A component on the host side is not judged against this list.
 pure-may-depend-on = []
 
+# Text that appears in code taking a document apart, and nowhere else.
+#
+# Only the member declaring `reads-documents` may name any of these. Every other
+# member's `src` is scanned for them, and a hit is refused by
+# crates/cli/tests/model_ownership.rs, because a component naming a part of the
+# file is a component that has stopped reading the model and started reading the
+# document. docs/decisions/0003-workbook-model.md argues why that is one
+# component's job.
+#
+# The list is here rather than inside the check for two reasons. The first person
+# to accept a second input format adds its part names in the commit that needs
+# them, beside the members rather than in a test. And a check whose own source
+# carried these strings would have to be taught to skip itself, which is a hole
+# in the shape of a rule.
+document-part-markers = [
+  "[Content_Types].xml",
+  "_rels/",
+  "xl/",
+  "http://schemas.openxmlformats.org/",
+]
+
 [workspace.package]
 version = "0.0.0"
 edition = "2024"
