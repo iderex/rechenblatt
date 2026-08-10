@@ -188,8 +188,12 @@ Code that reads bytes this project did not create stays behind a boundary. A
 parser takes bytes and returns a value or a typed error: it opens no path it was
 not handed, makes no network call, reads no clock, and never aborts the process on
 malformed input. That is a contract rather than a style preference, because it is
-what makes a fuzz target a wrapper instead of a rewrite. Issue #8 is where the
-build refuses a dependency edge that crosses the boundary.
+what makes a fuzz target a wrapper instead of a rewrite.
+`crates/cli/tests/boundary.rs` refuses a dependency edge that crosses the
+boundary and names both ends, and `docs/decisions/0014-input-boundary.md` is
+where the line is argued and what each side may do is written out. The build does
+not refuse the edge. A crossing edge compiles, so the run that tells you is
+`cargo test` and not `cargo build`.
 
 A decision that shapes the architecture goes in `docs/decisions/`, one file per
 decision, numbered, stating the decision in a sentence at the top, then the
