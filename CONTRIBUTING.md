@@ -202,6 +202,37 @@ reverse it. `docs/decisions/0002-track-order.md` is the shape to copy. A decisio
 argued only in a pull request thread is one the next person has to reconstruct
 from memory.
 
+The documents are checked like the code, and what checks them is part of the
+ordinary suite:
+
+```
+cargo test --locked --test documentation
+```
+
+It reads every markdown document in the tree and refuses two things. A backticked
+token shaped like a path in this repository, resolved at the root, that is not
+there. And a markdown link, resolved beside the document holding it, whose target
+is not there. A bare file name in backticks is not judged, because a document has
+to be able to name a file in order to say that it is absent; a link is not covered
+by that exception, since nobody links to a file to say it is missing.
+
+Three rules about these documents are prose. Nothing refuses them, each is here
+because no reading of a document decides it, and the check does not pretend
+otherwise.
+
+A fenced block declares what language it holds. Almost none here do, and several
+carry a command and the output it produced in one block, so what such a block
+declares is a convention for the whole tree before it is a check.
+
+A document does not enumerate something the repository can print. Whether a list
+drifts depends on which thing it is a list of, which is a judgement about meaning.
+Where an enumeration is pinned to a generator, that pinning is a check and is
+named beside the table; `docs/checks.md` argues its own on exactly those terms.
+
+A quoted command is correct and still prints what is pasted under it. Nothing
+inside a fenced block is read at all, so a command that has rotted reads like one
+that has not, and running it is what tells you.
+
 ## Style
 
 English in tracked text. No tool names, generated-by markers or attribution

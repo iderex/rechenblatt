@@ -215,10 +215,13 @@ of these gaps is the landing that edits the row.
 ## What holds this document to the tree
 
 Every path named here has to be there.
-`crates/cli/tests/documentation.rs` refuses a path in this directory that does
-not resolve, so a component renamed without its note going with it fails the
-suite rather than leaving a document that reads correctly and points nowhere.
-Issue #100 is where that grows into the rest of the documentation lint.
+`crates/cli/tests/documentation.rs` refuses a backticked path that does not
+resolve and a markdown link that goes nowhere, in every markdown document in the
+tree rather than in this directory alone, so a component renamed without its note
+going with it fails the suite rather than leaving a document that reads correctly
+and points nowhere. What it does not judge is written at the top of that file and
+in the contributor guide, and issue #100 holds the rest of the documentation
+lint.
 
 What refuses the rest is not listed here, because a list of checks drifts
 against the checks. `docs/checks.md` names the commands that print what exists.
