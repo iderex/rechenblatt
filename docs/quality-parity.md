@@ -140,8 +140,9 @@ the pull request can fix. Its register's checker is a separate matter, reads a
 file, needs nothing, and runs in the ordinary gate.
 
 The wiki lint reads documentation that lives outside the tree. This project's
-documentation is in the tree, so the counterpart is a lint over `docs/` rather
-than over a wiki, which is why the verdict is replaced rather than matched.
+documentation is in the tree, so the counterpart is a lint over the tracked prose
+rather than over a wiki, which is why the verdict is replaced rather than
+matched.
 
 The supply-chain self-audit already runs here. What #99 adds is the triage, so a
 finding is either fixed or recorded as accepted with a reason rather than
