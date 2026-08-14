@@ -48,8 +48,9 @@ sentence that survives being read out loud.
 
 `Runs-in` is the `Id` of the harness entry that does run it.
 
-What the register holds today is printed rather than written here, because a list
-in a document drifts against the thing it describes:
+The current contents of the register are printed by a command, and this document
+does not copy them out, because a list in a document drifts against the thing it
+describes:
 
     bash .github/scripts/check-excluded-from-the-default-run.sh .
 

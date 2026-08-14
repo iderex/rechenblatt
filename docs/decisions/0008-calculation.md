@@ -124,8 +124,7 @@ evaluator returns the unrounded result; the number format decides what is shown,
 including the fifteen significant decimal digits the incumbent shows for a
 general number and the rounding a format applies on top of that. An evaluator
 that rounds inside itself makes every later sum wrong in a way nobody can trace,
-which is why the position is named here rather than left to whoever writes the
-first function.
+and that is expensive enough to settle before the first function is written.
 
 The incumbent's own departures from the format - its treatment of certain near
 integers and its date arithmetic including the day that does not exist - are

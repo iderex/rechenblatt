@@ -223,8 +223,9 @@ and points nowhere. What it does not judge is written at the top of that file an
 in the contributor guide, and issue #100 holds the rest of the documentation
 lint.
 
-What refuses the rest is not listed here, because a list of checks drifts
-against the checks. `docs/checks.md` names the commands that print what exists.
+The rest is refused elsewhere, and this note does not list where, because a list
+of checks drifts against the checks. `docs/checks.md` names the commands that
+print what exists.
 
 The table above is the one thing in this note that reads like such a list, and
 it is the same exception `docs/checks.md` argues for itself: no command prints

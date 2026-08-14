@@ -122,9 +122,9 @@ them.
 
 ## What a good issue contains
 
-What is wrong, what the evidence is, and what done means. All three, because an
-issue missing the third is one nobody can close and an issue missing the second is
-an opinion.
+Three things: what is wrong, what the evidence is, and what done means. All
+three, because an issue missing the third is one nobody can close and an issue
+missing the second is an opinion.
 
 Where the evidence is a number, the issue carries the command that produced it, so
 a reader can run it again and get the same number or find out that it moved.
@@ -139,8 +139,8 @@ vulnerability here. Read it there rather than here, so the two cannot drift.
 
 ## What a good pull request body contains
 
-What changed and what failure it prevents. Not a restatement of the diff, which
-the reader already has.
+The change and the failure it prevents. A restatement of the diff is no use here,
+because the reader already has the diff.
 
 Which issue it closes, with the closing keyword, so the tracker does not need a
 second pass.

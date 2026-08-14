@@ -1,13 +1,13 @@
 # The checks that stand in front of the default branch
 
-A check that is not required is a suggestion. This document names which of the
-checks running here are merge conditions, which stay beside them, and the reason
-for each, so that a later change to the ruleset has a written decision behind it
-rather than a preference.
+A check that is not required is a suggestion. The pages below sort the checks
+running here into the ones that are merge conditions and the ones that stay
+beside them, with the reason for each, so that a later change to the ruleset has
+a written decision behind it and not a preference.
 
 `docs/quality-parity.md` maps this repository's gate onto the standard it chose
-to be held to, and it states the rule for the split without making it. This
-document makes it.
+to be held to. It states the rule for the split and stops there; the split itself
+is made here.
 
 ## The rule
 
@@ -146,8 +146,8 @@ could not be required even if it were eligible.
 reason or no script. It meets all three conditions: it refuses named things, its
 proof plants each of those mistakes and requires the refusal, and it reads one
 tracked file and nothing outside this repository. It is outside the table for the
-same reason the headless gate is, which is that this document quotes names read
-from completed runs and it has none yet. It joins the table in the same change
+same reason the headless gate is, which is that the table quotes names read from
+completed runs and it has none yet. It joins the table in the same change
 that adds it to the ruleset.
 
 The harness that check reads the register of is a different thing and is not a
@@ -156,24 +156,24 @@ condition failing by construction, and `docs/quality-parity.md` records that
 where the parity map is argued.
 
 The headless gate issue #7 delivers meets the first and third conditions and
-carries its own proof, so it is eligible on the second. Its check-run name is not
-quoted here because this document quotes names read from completed runs and it
-has none yet. It joins the table above in the same change that adds it to the
+carries its own proof, so it is eligible on the second. Its check-run name is
+absent from the table for the same reason: the table quotes names read from
+completed runs, and it has none yet. It joins the table above in the same change that adds it to the
 ruleset, once it has one.
 
 ## Changing the set
 
-Adding a check to the required set is a change to this document and a change to
-the ruleset, in one pull request, and the document says which of the three
-conditions the check now meets that it did not meet before. Removing one is the
+Adding a check to the required set changes this page and the ruleset together,
+in one pull request, and the page says which of the three conditions the check
+now meets that it did not meet before. Removing one is the
 same in reverse and says what stopped being true.
 
-That coupling is a rule this document states and nothing enforces. Nothing here
-reads the ruleset and compares it against this table, so a required set changed
-without a change to this file leaves no trace, and the commands above are how a
-reader checks rather than trusts.
+Nothing enforces that coupling. No job reads the ruleset and compares it against
+this table, so a required set changed without a change to this file leaves no
+trace, and the commands above are how a reader checks it instead of trusting
+it.
 
-## What this document does not claim
+## The claims not being made here
 
 The ruleset is unchanged by the pull request that added this file. What is
 written here is the decision and the reasoning; the required set is still empty

@@ -19,9 +19,9 @@ application has been growing for three decades.
 
 The other is the instrument. It is small, it is finishable, and it produces the
 measurement that tells anybody, including whoever builds the first product, where
-the effort should go. Every previous attempt at the first product has found the
-edge of the object model to be where the effort stopped rather than where the
-surface ended, and none of them could say beforehand which surfaces mattered.
+the effort should go. Every previous attempt at the first product ran out of
+effort somewhere inside the object model, a long way short of its edge, and none
+of them could say beforehand which surfaces mattered.
 
 The instrument is also the only half of the macro track that can be scored from
 the start, which is the same reason the rendering track was built first in
@@ -32,15 +32,15 @@ long time on nobody's evidence.
 ## The rule by which something is implemented
 
 A language construct or an object model surface is implemented because documents
-use it, and the ranking comes from a count rather than from intuition. This is
-the same rule the function library follows on the calculation side: the corpus
-decides, and the set grows from measurements rather than from a list somebody
-copied out of a reference.
+use it, and a count does the ranking. This is the same rule the function library
+follows on the calculation side: the corpus decides what the set holds, and every
+addition to it comes out of a measurement. Nobody copies a reference manual into
+it.
 
 The measurement that ranks them is the macro corpus report, issue #69, which says
 what real macros are made of. Issue #71 implements the core language in the order
-that measurement ranks, and issue #75 reports compatibility as a measured number
-per construct rather than as a single score.
+that measurement ranks, and issue #75 reports compatibility per construct, each
+figure measured, with no single score over the top.
 
 Three consequences of stating the rule this way.
 
@@ -51,8 +51,9 @@ A construct that many corpus documents use is implemented even where it is
 awkward, because the ranking is the authority and an awkward construct that
 documents actually contain is exactly what an instrument is for.
 
-What could not be parsed is reported rather than counted as unsupported. Issue
-#70 keeps those apart, because a construct nobody implemented and a construct the
+Anything the parser could not read gets its own report and never lands in the
+unsupported column. Issue #70 keeps the two apart, because a construct nobody
+implemented and a construct the
 parser choked on are different failures and only one of them is about the
 language.
 
@@ -63,16 +64,16 @@ model is the authority on what a document says. Reading a document a second time
 inside the macro track is how two readers that disagree about one file get built,
 which is the failure this project exists to complain about elsewhere.
 
-It may assume that anything the model could not represent is recorded rather than
-dropped, so a macro that touches a part the model does not hold produces a
-reportable gap rather than a wrong answer.
+It may assume that anything the model could not represent is recorded. Nothing is
+dropped on the way in, so a macro touching a part the model does not hold
+produces a reportable gap, and the answer it returns is never quietly wrong.
 
-It may assume a suite that runs headless and unelevated, and that a new test in
-the macro track inherits that condition rather than negotiating it.
+It may assume a suite that runs headless and unelevated. A new test in the macro
+track inherits that condition and has no standing to negotiate it.
 
 It may assume that a write through the object model triggers recalculation the
-same way any other change does, because a macro that changes a cell and reads a
-dependent cell is the ordinary case rather than an exotic one.
+same way any other change does, because a macro that changes a cell and then
+reads a dependent one is the ordinary case here.
 
 It may not assume that the calculation engine evaluates everything a macro can
 reach. The function library is bounded by what the corpus needs, and a macro
@@ -113,9 +114,9 @@ enumerable set of constructs and object model surfaces covers most of what real
 documents contain, the runtime stops being an unbounded surface and becomes a
 finite piece of work, and the argument for holding it back disappears.
 
-That is a number the macro corpus report produces, so the reversal is checkable
-rather than rhetorical, and it is checked against #69's output rather than
-against anybody's sense of how the work is going.
+That is a number the macro corpus report produces, so the reversal is checkable.
+#69's output is what it is checked against, and nobody's sense of how the work is
+going enters it.
 
 The condition that does not reverse it is demand. An operator asking for a macro
 to run is the expected state of the world throughout this track and was priced in

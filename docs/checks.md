@@ -1,7 +1,7 @@
 # The checks
 
-What runs when a change is proposed, what each one is called, and what
-reproduces it here.
+The jobs a proposed change sets off, the name each one answers to, and the
+command that reproduces it here.
 
 ## What exists, printed rather than written down
 
@@ -11,7 +11,7 @@ The workflows in the tree:
 git ls-files .github/workflows
 ```
 
-What actually ran on a pull request, with each result:
+The jobs a given pull request actually ran, with each result:
 
 ```
 gh pr checks <number>
@@ -76,7 +76,8 @@ is to delete the list and name the command that prints it. Both commands are
 above. The table stays because a name alone is useless: the reader wants the
 command that reproduces the check, and no command in the world prints that.
 
-What makes it safe is that a checker refuses the drift:
+A checker refuses the drift, which is the whole reason the table is safe to
+keep:
 
 ```
 bash .github/scripts/check-check-names.sh .
