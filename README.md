@@ -46,3 +46,9 @@ See [NOTICE.md](NOTICE.md) for the intended-use notice,
 [docs/intended-use.md](docs/intended-use.md) for what the maintainers consider
 outside this project and what the software does not prevent, and
 [SECURITY.md](SECURITY.md) for the private reporting route.
+
+## License
+
+AGPL-3.0, copyright 2026 Nils Lehnen.
+
+The full text is in [LICENSE](LICENSE).
