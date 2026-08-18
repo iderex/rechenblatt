@@ -13,8 +13,8 @@ The repository holds documents and workflow guards and no code. Every other issu
 in the plan assumes a language without saying so, and an assumption nobody wrote
 down is one nobody can disagree with on the merits.
 
-What the work is decides this more than habit does. Three of the four large pieces
-take bytes from a stranger and walk them: a zip container of XML parts, a compound
+The work decides this more than habit does. Three of the four large pieces take
+bytes from a stranger and walk them: a zip container of XML parts, a compound
 file holding a compiled macro project, and font files. One piece is a layout and
 rasterisation engine whose output has to be identical between two runs. One piece
 is an interpreter for a language somebody else defined. A memory-safety failure in

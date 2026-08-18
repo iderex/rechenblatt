@@ -108,9 +108,9 @@ finding nothing is what it would do either way:
 
     cargo clippy --locked --workspace --lib --bins -- -A warnings -D clippy::unwrap_used
 
-What the gate can be said to do today is refuse each construct in the register
-when one is planted, which is what the proof runs and what makes the gate worth
-having before the readers arrive rather than after. It is not evidence that the
+The claim the gate carries today is narrow: it refuses each construct in the
+register when one is planted. That is what the proof runs, and it is why the gate
+is worth having before the readers arrive. It is not evidence that the
 shipped code is free of these constructs, because there is barely any shipped
 code. That sentence stops being true in the milestone that lands the first
 parser, and until then a green run here is a statement about the gate and not

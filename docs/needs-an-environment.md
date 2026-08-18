@@ -59,8 +59,8 @@ purely, has no sentence that survives being read out loud.
 
 `Run` is the command, from the repository root.
 
-What the register holds today is printed rather than written here, because a list
-in a document drifts against the thing it describes:
+Reading the register is a command away, so its entries are not copied into this
+page, where they would drift against the thing they describe:
 
     sed -n 's/^Id: //p' .github/scripts/needs-an-environment.txt
 
@@ -132,8 +132,8 @@ a test that reaches neither, so a test taken out of the default suite and given 
 nothing is no longer invisible.
 `docs/excluded-from-the-default-run.md` argues that half and says where it stops.
 
-What is still not compared is the other direction: nothing reads a test that
-NEEDS an environment and was never taken out of the default suite. Such a test
+The other direction goes uncompared: nothing reads a test that NEEDS an
+environment and was never taken out of the default suite. Such a test
 runs there and fails on its own assertion, and no reading of a source says in
 advance that it wanted a display.
 
