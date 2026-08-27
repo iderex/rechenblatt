@@ -124,6 +124,43 @@ capability is one the operator explicitly configured, a report that the capabili
 works is not a vulnerability. A report that it can be reached without that
 configuration is.
 
+## If this software leaked a secret
+
+Rotate first. A token, a document password or a key that reached a log line, a
+metric label, a crash report, a diagnostic bundle or a message shown to a user is
+compromised from the moment it was written there, and nothing an advisory says
+later changes that. Rotation is the one step that does not depend on finding the
+copies.
+
+Then report it, by the private route at the top of this page. What is useful in
+that report: which surface the value appeared on, at what verbosity level, the
+smallest input that reproduces it, and the value in a redacted form rather than
+the value. A leak that only happens at the most verbose level is still a leak,
+because that level is one an operator is entitled to turn on.
+
+What the fix can cover and what it cannot. A fix here stops this software writing
+that value again, and the advisory names the surface, the versions affected and
+what an operator has to check on their own machine. Where the copies already
+written went is outside what this project can see: a log has its own retention
+and its own access, it may already be in a bug report or a support ticket, and
+finding and removing those copies is the operator's work. That asymmetry is the
+reason rotation comes before the report rather than after it.
+
+Nothing here holds a secret today. The tree carries no code that takes a token, a
+password or a key, so this section describes a route before there is anything
+travelling it, and no test in this repository proves a secret stays out of the
+surfaces listed above. What exists is one pattern over the tracked source, which
+refuses a credential held in a type whose `Debug` and `Display` would print it:
+
+```
+git grep -n 'Id: secret-in-a-plain-string' -- .github/scripts/invariants.txt
+.github/scripts/invariants.txt:44:Id: secret-in-a-plain-string
+```
+
+That reads a declaration and never a value, so it catches the shape and not the
+leak. Issue #83 is where the redacting type, the accepted routes for supplying a
+secret and the tests over a crash report and a diagnostic bundle are built.
+
 ## Once a report is accepted
 
 The fix lands with a test that fails without it, on the same terms as any other
