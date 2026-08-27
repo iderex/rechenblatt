@@ -138,13 +138,13 @@ smallest input that reproduces it, and the value in a redacted form rather than
 the value. A leak that only happens at the most verbose level is still a leak,
 because that level is one an operator is entitled to turn on.
 
-What the fix can cover and what it cannot. A fix here stops this software writing
-that value again, and the advisory names the surface, the versions affected and
-what an operator has to check on their own machine. Where the copies already
-written went is outside what this project can see: a log has its own retention
-and its own access, it may already be in a bug report or a support ticket, and
-finding and removing those copies is the operator's work. That asymmetry is the
-reason rotation comes before the report rather than after it.
+A fix here stops this software writing that value again, and the advisory names
+the surface, the versions affected and what an operator has to check on their own
+machine. Where the copies already written went is outside what this project can
+see: a log has its own retention and its own access, it may already be in a bug
+report or a support ticket, and finding and removing those copies is the
+operator's work. That asymmetry is the reason rotation comes before the report
+rather than after it.
 
 Nothing here holds a secret today. The tree carries no code that takes a token, a
 password or a key, so this section describes a route before there is anything
