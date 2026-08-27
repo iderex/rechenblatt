@@ -98,7 +98,20 @@ name is worth keeping identical.
 not use, so the obligation splits: code formatting belongs to #4 and document
 linting to #100.
 
-`dependency-review` is already here and is language-independent.
+`dependency-review` is already here, is language-independent, and fails closed at
+the lowest severity the action offers:
+
+    git grep -n 'fail-on-severity' -- .github/workflows/dependency-review.yml
+    .github/workflows/dependency-review.yml:44:          fail-on-severity: low
+
+    gh pr checks 159 --repo iderex/rechenblatt --json name,state --jq '.[] | select(.name == "Dependency review") | .state'
+    SUCCESS
+
+The second command shows the check running on a pull request, and it shows
+nothing else. That pull request added no dependency, so a pass over it is not
+evidence that a vulnerable one would be refused, and nothing here has yet shown
+this check refuse anything. #99 is where that demonstration belongs, in the shape
+the other gates here use to prove that they bite.
 
 ## The practices the target runs without requiring them
 
