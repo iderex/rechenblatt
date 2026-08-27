@@ -57,15 +57,20 @@ gh api repos/iderex/rechenblatt/releases --jq 'length'
 Once releases exist, this section names which of them still receive fixes. Until
 then, a report is assessed against `main` at the time it arrives.
 
-The repository today holds documents and workflow guards and no code:
+The repository holds a workspace of Rust crates and no parser:
 
 ```
 git ls-tree -r --name-only origin/main | grep -cE '\.(rs|toml)$'
-0
+23
+git grep -c -E '^[[:space:]]*(pub )?fn ' origin/main -- 'crates/*/src/*.rs'
+origin/main:crates/cli/src/main.rs:4
 ```
 
-`grep -c` exits 1 when it counts nothing, so read the printed number and not the
-exit status.
+Twenty-three tracked source and manifest files, and every function among them
+sits in the command's own binary. The five libraries hold a doc comment and the
+name their component answers to, so nothing here yet takes a byte out of a
+document. The eight test files in the workspace judge the tree itself: the
+dependency edges, the fixture register, the paths the documents name.
 
 So a report against this repository right now is most likely to be about the
 workflows, the tracked text, or the supply chain around them, rather than about a
@@ -118,6 +123,43 @@ Anything that requires the operator to have already decided to do it. If a
 capability is one the operator explicitly configured, a report that the capability
 works is not a vulnerability. A report that it can be reached without that
 configuration is.
+
+## If this software leaked a secret
+
+Rotate first. A token, a document password or a key that reached a log line, a
+metric label, a crash report, a diagnostic bundle or a message shown to a user is
+compromised from the moment it was written there, and nothing an advisory says
+later changes that. Rotation is the one step that does not depend on finding the
+copies.
+
+Then report it, by the private route at the top of this page. What is useful in
+that report: which surface the value appeared on, at what verbosity level, the
+smallest input that reproduces it, and the value in a redacted form rather than
+the value. A leak that only happens at the most verbose level is still a leak,
+because that level is one an operator is entitled to turn on.
+
+What the fix can cover and what it cannot. A fix here stops this software writing
+that value again, and the advisory names the surface, the versions affected and
+what an operator has to check on their own machine. Where the copies already
+written went is outside what this project can see: a log has its own retention
+and its own access, it may already be in a bug report or a support ticket, and
+finding and removing those copies is the operator's work. That asymmetry is the
+reason rotation comes before the report rather than after it.
+
+Nothing here holds a secret today. The tree carries no code that takes a token, a
+password or a key, so this section describes a route before there is anything
+travelling it, and no test in this repository proves a secret stays out of the
+surfaces listed above. What exists is one pattern over the tracked source, which
+refuses a credential held in a type whose `Debug` and `Display` would print it:
+
+```
+git grep -n 'Id: secret-in-a-plain-string' -- .github/scripts/invariants.txt
+.github/scripts/invariants.txt:44:Id: secret-in-a-plain-string
+```
+
+That reads a declaration and never a value, so it catches the shape and not the
+leak. Issue #83 is where the redacting type, the accepted routes for supplying a
+secret and the tests over a crash report and a diagnostic bundle are built.
 
 ## Once a report is accepted
 
