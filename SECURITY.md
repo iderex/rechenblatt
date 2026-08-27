@@ -57,15 +57,20 @@ gh api repos/iderex/rechenblatt/releases --jq 'length'
 Once releases exist, this section names which of them still receive fixes. Until
 then, a report is assessed against `main` at the time it arrives.
 
-The repository today holds documents and workflow guards and no code:
+The repository holds a workspace of Rust crates and no parser:
 
 ```
 git ls-tree -r --name-only origin/main | grep -cE '\.(rs|toml)$'
-0
+23
+git grep -c -E '^[[:space:]]*(pub )?fn ' origin/main -- 'crates/*/src/*.rs'
+origin/main:crates/cli/src/main.rs:4
 ```
 
-`grep -c` exits 1 when it counts nothing, so read the printed number and not the
-exit status.
+Twenty-three tracked source and manifest files, and every function among them
+sits in the command's own binary. The five libraries hold a doc comment and the
+name their component answers to, so nothing here yet takes a byte out of a
+document. The eight test files in the workspace judge the tree itself: the
+dependency edges, the fixture register, the paths the documents name.
 
 So a report against this repository right now is most likely to be about the
 workflows, the tracked text, or the supply chain around them, rather than about a
