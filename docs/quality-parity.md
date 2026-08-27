@@ -137,6 +137,21 @@ verified against the job names inside those files.
 Mutation testing carries over for the same reason it exists there, that coverage
 measures which lines ran and not whether a test would have noticed them changing.
 
+It advises here and does not gate. The rule for that split is below: a check
+becomes a merge condition when it refuses something specific, has been shown to
+bite, and cannot be red for a reason outside the change. A mutation score is a
+score, which is the first thing that rule places beside the gate rather than in
+it. The third disqualifies it too, and for a reason particular to this practice:
+the run is bounded in time so that it can be part of a routine gate at all, so a
+mutant that survives because the budget ran out is a red the change did not
+cause, on a machine that was slower rather than on a suite that got weaker. #97
+is where the score, the floor and the review of surviving mutants land, and it
+asks for this verdict with its reason before the tool that produces the score.
+
+The verdict does not decide the floor. A tracked floor can refuse a number even
+where the run beside it is advisory, and whether that refusal becomes a merge
+condition is the fidelity baseline's question rather than this one.
+
 Fuzzing is the one practice this project needs more of than the target, not less:
 there, the fuzzed surface is small; here it is every reader of a document
 somebody was sent by email.
