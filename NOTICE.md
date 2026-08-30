@@ -11,9 +11,9 @@ The line the maintainers draw around that is written out in
 cannot carry on its own: the software prevents none of it, and rendering a
 document is not permission to have it.
 
-There is no warranty or liability disclaimer here for you to read. A
-disclaimer of that kind lives in a licence, this repository has no licence
-file, and choosing one is a question the maintainer has not settled. Issue
-#111 holds the question and issue #88 is where the file lands. Until it
-does, nothing here disclaims anything and nothing here grants you anything
-either.
+The warranty and liability disclaimer is not written out here, because it
+lives in the licence. This repository is published under the GNU Affero
+General Public License version 3, which [LICENSE](LICENSE) carries in full:
+sections 15 and 16 are the disclaimer and section 2 is what you are granted.
+Read them there rather than here. A summary of either in this file would be
+a second place for them to be wrong.

@@ -10,11 +10,16 @@ The `DCO` workflow in `.github/workflows/` refuses a pull request containing a
 commit without a matching trailer.
 
 One thing you are entitled to know before you sign anything. Clause (a) below
-speaks of the licence indicated in the file, and this repository has no licence
-file yet, so there is nothing here for you to point at. Choosing it is an open
-question the maintainer has not settled, recorded in issue #111, and issue #88 is
-where the file lands. Until then, a sign-off here certifies the origin of your
-work and its licensing is a question this repository has not answered.
+speaks of the licence indicated in the file, and the licence this repository is
+published under is the GNU Affero General Public License version 3, which
+[LICENSE](LICENSE) carries in full. Read it before you sign, in particular
+section 13, which is what it asks of anybody who runs a modified version as a
+network service.
+
+The source files themselves carry no notice yet, so there is nothing in the file
+for clause (a) to point at and the repository licence is what your sign-off is
+certified against. Issue #88 is where the per-file notice lands, and this
+paragraph gets shorter when it does.
 
 The text below is reproduced verbatim from
 [developercertificate.org](https://developercertificate.org/) and is not modified

@@ -20,10 +20,10 @@ suite. Since a fidelity gap in that suite is the reason this repository exists,
 that route produces a wrapper around the problem rather than a remedy for it.
 
 The second is to take an existing engine's rendering code and build on it. That
-inherits the code and the licence in one move, and this repository has no licence
-yet: the first entry of issue #111 is open, and issue #88 is where the answer
-lands. Taking copyleft rendering code would answer that question silently, by
-making the only lawful answer the licence of the code that was taken.
+inherits the code and the licence in one move. This repository is published under
+the GNU Affero General Public License version 3, so anything taken has to arrive
+under terms that grant can carry, and a differently copylefted engine would settle
+the question by what was copied rather than by anybody here.
 
 The third is to write the pipeline and own every decision in it. It is expensive
 and it is the only version in which a fidelity difference is something this

@@ -74,9 +74,17 @@ edition = "2024"
 # syntax. docs/decisions/0001-means.md is where that policy is argued.
 rust-version = "1.97.1"
 repository = "https://github.com/iderex/rechenblatt"
-# No `license` field. This repository has no licence yet; it is the first entry of
-# issue #111 and it is delivered by issue #88. Naming one here would decide it by
-# accident, so every package below also sets `publish = false`.
+# No `license` field yet, and not because the licence is open. This repository is
+# published under the GNU Affero General Public License version 3, which LICENSE
+# carries in full. What an SPDX expression has to state on top of that is whether
+# the grant is version 3 only or version 3 or later, and no tracked file states it:
+# the "or later" wording in LICENSE sits in the appendix headed "How to Apply These
+# Terms to Your New Programs", which is instructional text after the end of the
+# terms. Issue #88 is where the per-file notice lands and settles which of the two
+# this is, and the field arrives with it rather than being guessed here.
+#
+# `publish = false` on every package below is a separate decision and does not move
+# with this one: nothing in this workspace is ready for anybody to depend on.
 
 [workspace.dependencies]
 rechenblatt-model = { path = "crates/model", version = "0.0.0" }
