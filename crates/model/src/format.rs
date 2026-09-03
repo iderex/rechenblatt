@@ -18,10 +18,12 @@
 //! What is read of a part's content is one stored entry, `mimetype`, which the
 //! OpenDocument package format requires to be uncompressed.
 //!
-//! The detector allocates nothing. It walks a borrowed slice, so the memory it
-//! holds is what the caller handed it, and the walk advances by at least the
-//! size of one directory header per step, so its time is bounded by the length
-//! of the slice.
+//! The detector allocates nothing and indexes nothing. It walks a borrowed
+//! slice through `get`, so an offset the archive declares that points outside
+//! the bytes is a `None` rather than a panic, and every addition on an offset
+//! is checked, so a length that would wrap is the same `None`. The walk
+//! advances by at least the size of one directory header per step, so its time
+//! is bounded by the length of the slice.
 //!
 //! Where it stops. A package is recognised by the conventional names of its
 //! parts and not by the relationship that formally identifies the main part,
@@ -240,9 +242,9 @@ enum MimeType {
 
 fn classify(bytes: &[u8], directory: usize) -> Detection {
     let mut named = Named::default();
-    let mut entries = 0usize;
+    let mut any_entry = false;
     for entry in Entries::new(bytes, directory) {
-        entries += 1;
+        any_entry = true;
         match entry.name {
             b"xl/workbook.xml" => named.workbook_markup.get_or_insert(entry.offset),
             b"xl/workbook.bin" => named.workbook_binary.get_or_insert(entry.offset),
@@ -311,10 +313,10 @@ fn classify(bytes: &[u8], directory: usize) -> Detection {
         format: Format::UnknownPackage,
         evidence: at(
             directory,
-            if entries == 0 {
-                "a central directory naming no part at all"
-            } else {
+            if any_entry {
                 "a central directory naming no part this project can name"
+            } else {
+                "a central directory naming no part at all"
             },
         ),
     }
@@ -354,23 +356,29 @@ impl<'a> Iterator for Entries<'a> {
         const SIGNATURE: [u8; 4] = [0x50, 0x4B, 0x01, 0x02];
         const HEADER: usize = 46;
 
-        let header = self.bytes.get(self.position..self.position + HEADER)?;
-        if header[..4] != SIGNATURE {
+        let name_start = self.position.checked_add(HEADER)?;
+        let header = self.bytes.get(self.position..name_start)?;
+        if !header.starts_with(&SIGNATURE) {
             return None;
         }
-        let name_length = usize::from(u16_at(header, 28));
-        let extra_length = usize::from(u16_at(header, 30));
-        let comment_length = usize::from(u16_at(header, 32));
-        let name_start = self.position + HEADER;
-        let name = self.bytes.get(name_start..name_start + name_length)?;
+        let name_length = usize::from(u16_at(header, 28)?);
+        let extra_length = usize::from(u16_at(header, 30)?);
+        let comment_length = usize::from(u16_at(header, 32)?);
+        let name_end = name_start.checked_add(name_length)?;
+        let name = self.bytes.get(name_start..name_end)?;
         let entry = Entry {
             offset: self.position,
             name,
-            method: u16_at(header, 10),
-            uncompressed_size: u32_at(header, 24),
-            local_header: u32_at(header, 42),
+            method: u16_at(header, 10)?,
+            uncompressed_size: u32_at(header, 24)?,
+            local_header: u32_at(header, 42)?,
         };
-        self.position = name_start + name_length + extra_length + comment_length;
+        // An archive whose lengths add up past the end of memory has nothing
+        // readable after this entry, so the walk ends there rather than wraps.
+        self.position = name_end
+            .checked_add(extra_length)
+            .and_then(|at| at.checked_add(comment_length))
+            .unwrap_or(self.bytes.len());
         Some(entry)
     }
 }
@@ -386,14 +394,14 @@ fn stored_content<'a>(bytes: &'a [u8], entry: &Entry<'_>) -> Option<&'a [u8]> {
         return None;
     }
     let start = usize::try_from(entry.local_header).ok()?;
-    let header = bytes.get(start..start.checked_add(HEADER)?)?;
-    if header[..4] != SIGNATURE {
+    let name_start = start.checked_add(HEADER)?;
+    let header = bytes.get(start..name_start)?;
+    if !header.starts_with(&SIGNATURE) {
         return None;
     }
-    let name_length = usize::from(u16_at(header, 26));
-    let extra_length = usize::from(u16_at(header, 28));
-    let data = start
-        .checked_add(HEADER)?
+    let name_length = usize::from(u16_at(header, 26)?);
+    let extra_length = usize::from(u16_at(header, 28)?);
+    let data = name_start
         .checked_add(name_length)?
         .checked_add(extra_length)?;
     let size = usize::try_from(entry.uncompressed_size).ok()?;
@@ -414,12 +422,14 @@ fn central_directory(bytes: &[u8]) -> Option<usize> {
 
     let last = bytes.len().checked_sub(END_LENGTH)?;
     let earliest = last.saturating_sub(LONGEST_COMMENT);
-    let end = (earliest..=last)
-        .rev()
-        .find(|&at| bytes[at..at + 4] == END_SIGNATURE)?;
-    let record = &bytes[end..end + END_LENGTH];
-    let entries = u16_at(record, 10);
-    let offset = u32_at(record, 16);
+    let end = (earliest..=last).rev().find(|&at| {
+        bytes
+            .get(at..)
+            .is_some_and(|rest| rest.starts_with(&END_SIGNATURE))
+    })?;
+    let record = bytes.get(end..end.checked_add(END_LENGTH)?)?;
+    let entries = u16_at(record, 10)?;
+    let offset = u32_at(record, 16)?;
 
     if entries != 0xFFFF && offset != 0xFFFF_FFFF {
         let offset = usize::try_from(offset).ok()?;
@@ -427,29 +437,34 @@ fn central_directory(bytes: &[u8]) -> Option<usize> {
     }
 
     let locator_at = end.checked_sub(LOCATOR_LENGTH)?;
-    let locator = &bytes[locator_at..end];
-    if locator[..4] != LOCATOR_SIGNATURE {
+    let locator = bytes.get(locator_at..end)?;
+    if !locator.starts_with(&LOCATOR_SIGNATURE) {
         return None;
     }
-    let zip64_at = usize::try_from(u64_at(locator, 8)).ok()?;
+    let zip64_at = usize::try_from(u64_at(locator, 8)?).ok()?;
     let zip64 = bytes.get(zip64_at..zip64_at.checked_add(ZIP64_LENGTH)?)?;
-    if zip64[..4] != ZIP64_SIGNATURE {
+    if !zip64.starts_with(&ZIP64_SIGNATURE) {
         return None;
     }
-    let offset = usize::try_from(u64_at(zip64, 48)).ok()?;
+    let offset = usize::try_from(u64_at(zip64, 48)?).ok()?;
     (offset < zip64_at).then_some(offset)
 }
 
-fn u16_at(bytes: &[u8], at: usize) -> u16 {
-    u16::from_le_bytes([bytes[at], bytes[at + 1]])
+// The three readers of a little-endian field. Each answers `None` where the
+// field would reach past the slice, which is the only way a field read out of
+// a stranger's archive is allowed to fail.
+
+fn u16_at(bytes: &[u8], at: usize) -> Option<u16> {
+    let field = bytes.get(at..at.checked_add(2)?)?;
+    <[u8; 2]>::try_from(field).ok().map(u16::from_le_bytes)
 }
 
-fn u32_at(bytes: &[u8], at: usize) -> u32 {
-    u32::from_le_bytes([bytes[at], bytes[at + 1], bytes[at + 2], bytes[at + 3]])
+fn u32_at(bytes: &[u8], at: usize) -> Option<u32> {
+    let field = bytes.get(at..at.checked_add(4)?)?;
+    <[u8; 4]>::try_from(field).ok().map(u32::from_le_bytes)
 }
 
-fn u64_at(bytes: &[u8], at: usize) -> u64 {
-    let mut word = [0u8; 8];
-    word.copy_from_slice(&bytes[at..at + 8]);
-    u64::from_le_bytes(word)
+fn u64_at(bytes: &[u8], at: usize) -> Option<u64> {
+    let field = bytes.get(at..at.checked_add(8)?)?;
+    <[u8; 8]>::try_from(field).ok().map(u64::from_le_bytes)
 }
